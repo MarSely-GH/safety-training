@@ -1,0 +1,6552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тренажёр по производственной безопасности</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --text: #1a2332;
+      --text-muted: #5c6b7a;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #059669;
+      --success-bg: #d1fae5;
+      --error: #dc2626;
+      --error-bg: #fee2e2;
+      --border: #e2e8f0;
+      --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+      --radius: 12px;
+      --transition: 0.2s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px 16px 32px;
+    }
+
+    .screen { display: none; animation: fadeIn 0.25s ease; }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: clamp(1.35rem, 4vw, 1.75rem);
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .subtitle, .instruction {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition), opacity var(--transition);
+      font-family: inherit;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .btn:last-child { margin-bottom: 0; }
+
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: #f8fafc; }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+    .btn-success:hover:not(:disabled) { background: #047857; }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn-row .btn { margin-bottom: 0; }
+
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: #e8eef5;
+      border-radius: 8px;
+    }
+
+    .progress-bar strong { color: var(--text); }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .answers-list { list-style: none; }
+
+    .answer-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      user-select: none;
+    }
+
+    .answer-item:hover:not(.locked) {
+      border-color: #94a3b8;
+      background: #f1f5f9;
+    }
+
+    .answer-item.selected {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .answer-item.correct {
+      border-color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .answer-item.wrong {
+      border-color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .answer-item.missed {
+      border-color: var(--success);
+      background: var(--success-bg);
+      opacity: 0.85;
+    }
+
+    .answer-item.locked { cursor: default; }
+
+    .answer-item.correct-answer {
+      border-color: var(--success);
+      background: var(--success-bg);
+      font-weight: 700;
+    }
+
+    .answer-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #94a3b8;
+      border-radius: 6px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .answer-item.selected .answer-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .answer-item.selected .answer-checkbox::after {
+      content: "✓";
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .answer-item.correct .answer-checkbox,
+    .answer-item.missed .answer-checkbox,
+    .answer-item.correct-answer .answer-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .answer-item.wrong .answer-checkbox {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .answer-label { font-size: 0.8rem; color: var(--text-muted); min-width: 24px; }
+    .answer-text { flex: 1; font-size: 0.95rem; }
+
+    .feedback {
+      margin: 16px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .feedback.success { background: var(--success-bg); color: #065f46; }
+    .feedback.error { background: var(--error-bg); color: #991b1b; }
+
+    .ticket-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .ticket-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ticket-card .btn { width: auto; min-width: 140px; margin: 0; }
+
+    .study-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .study-controls input,
+    .study-controls select {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: var(--surface);
+    }
+
+    .study-list {
+      list-style: none;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .study-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .study-item:hover { background: #f1f5f9; }
+    .study-item-num { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .study-item-text {
+      font-size: 0.9rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .view-question {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .view-question:last-child { border-bottom: none; }
+
+    .view-question-num {
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .view-answers { list-style: none; margin-top: 10px; }
+    .view-answers li {
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .view-answers li.correct-show {
+      background: var(--success-bg);
+      font-weight: 700;
+      color: #065f46;
+    }
+
+    .results-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .stat-box {
+      text-align: center;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 16px;
+      border: none;
+      background: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .hidden-answers .view-answers li.correct-show {
+      background: transparent;
+      font-weight: normal;
+      color: inherit;
+    }
+
+    .meta-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #e0e7ff;
+      color: #3730a3;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 600px) {
+      .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .home-buttons .btn { margin-bottom: 0; }
+      .home-buttons .btn-wide { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Главный экран -->
+    <section id="screen-home" class="screen active">
+      <div class="card">
+        <h1>Тренажёр по производственной безопасности</h1>
+        <p class="instruction">В каждом вопросе может быть один или несколько правильных ответов. Выберите все варианты, которые считаете правильными.</p>
+        <div id="resume-banner" class="card" style="display:none;background:#eff6ff;border-color:#93c5fd;margin-bottom:16px">
+          <p style="margin-bottom:10px;font-size:0.9rem">Есть незавершённая тренировка</p>
+          <button type="button" class="btn btn-primary" data-action="resume-session">Продолжить</button>
+        </div>
+        <div class="home-buttons">
+          <button type="button" class="btn btn-primary btn-wide" data-action="start-training">Начать тренировку</button>
+          <button type="button" class="btn btn-secondary" data-action="random-ticket">Случайный билет</button>
+          <button type="button" class="btn btn-secondary" data-action="all-tickets">Все билеты</button>
+          <button type="button" class="btn btn-secondary" data-action="study-mode">Режим изучения</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Тренировка / билет (режим теста) -->
+    <section id="screen-quiz" class="screen">
+      <button type="button" class="back-link" data-action="go-home">← На главную</button>
+      <div class="progress-bar" id="quiz-progress"></div>
+      <div class="card">
+        <div class="question-text" id="quiz-question"></div>
+        <ul class="answers-list" id="quiz-answers"></ul>
+        <div id="quiz-feedback" class="feedback" style="display:none"></div>
+        <button type="button" class="btn btn-secondary" id="btn-back-quiz" style="display:none;margin-bottom:10px">Назад</button>
+        <button type="button" class="btn btn-primary" id="btn-check">Проверить</button>
+        <div id="quiz-nav" style="display:none">
+          <div class="btn-row" style="margin-top:10px">
+            <button type="button" class="btn btn-secondary" id="btn-prev">Назад</button>
+            <button type="button" class="btn btn-primary" id="btn-next">Следующий вопрос</button>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btn-finish" style="margin-top:10px">Завершить</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Список билетов -->
+    <section id="screen-tickets" class="screen">
+      <button type="button" class="back-link" data-action="go-home">← На главную</button>
+      <h2>Все билеты</h2>
+      <p class="subtitle">В каждом билете 20 вопросов</p>
+      <div class="ticket-grid" id="tickets-list"></div>
+    </section>
+
+    <!-- Меню билета -->
+    <section id="screen-ticket-menu" class="screen">
+      <button type="button" class="back-link" data-action="all-tickets">← К списку билетов</button>
+      <h2 id="ticket-menu-title">Билет</h2>
+      <button type="button" class="btn btn-primary" data-action="ticket-test">Пройти тест</button>
+      <button type="button" class="btn btn-secondary" data-action="ticket-view">Просмотр билета</button>
+    </section>
+
+    <!-- Просмотр билета -->
+    <section id="screen-ticket-view" class="screen">
+      <button type="button" class="back-link" data-action="ticket-menu-back">← Назад</button>
+      <h2 id="view-ticket-title">Просмотр билета</h2>
+      <button type="button" class="btn btn-secondary" id="btn-toggle-answers">Скрыть правильные ответы</button>
+      <div class="card" id="ticket-view-content" style="margin-top:16px"></div>
+    </section>
+
+    <!-- Режим изучения -->
+    <section id="screen-study" class="screen">
+      <button type="button" class="back-link" data-action="go-home">← На главную</button>
+      <h2>Режим изучения</h2>
+      <div class="study-controls">
+        <input type="search" id="study-search" placeholder="Поиск по словам..." autocomplete="off">
+        <select id="study-ticket-filter">
+          <option value="">Все билеты</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden">
+        <ul class="study-list" id="study-list"></ul>
+      </div>
+    </section>
+
+    <!-- Детали вопроса (изучение) -->
+    <section id="screen-study-detail" class="screen">
+      <button type="button" class="back-link" data-action="study-back">← К списку</button>
+      <div class="card" id="study-detail-content"></div>
+    </section>
+
+    <!-- Итоги -->
+    <section id="screen-results" class="screen">
+      <button type="button" class="back-link" data-action="go-home">← На главную</button>
+      <h2>Результаты</h2>
+      <div class="card">
+        <div class="results-stats" id="results-stats"></div>
+        <button type="button" class="btn btn-success" data-action="retry">Пройти заново</button>
+        <button type="button" class="btn btn-secondary" data-action="go-home">На главную</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // === Данные вопросов (из Word-файлов) ===
+    const QUESTIONS = [
+  {
+    "id": 1,
+    "ticket": 1,
+    "question": "В какой цвет должны быть окрашены пожарные шкафы?",
+    "answers": [
+      {
+        "text": "Синий",
+        "correct": false
+      },
+      {
+        "text": "Зеленый",
+        "correct": false
+      },
+      {
+        "text": "Красный",
+        "correct": true
+      },
+      {
+        "text": "Желтый",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "ticket": 1,
+    "question": "Нужно ли проводить внеплановый инструктаж при введении нового нормативного акта по охране труда?",
+    "answers": [
+      {
+        "text": "Только по решению работодателя",
+        "correct": false
+      },
+      {
+        "text": "Не нужно",
+        "correct": false
+      },
+      {
+        "text": "Нужно",
+        "correct": true
+      },
+      {
+        "text": "Только для руководителей",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "ticket": 1,
+    "question": "Можно ли использовать углекислотный огнетушитель для тушения электроустановок под напряжением?",
+    "answers": [
+      {
+        "text": "Нельзя никогда",
+        "correct": false
+      },
+      {
+        "text": "Можно до 10 кВ",
+        "correct": true
+      },
+      {
+        "text": "Можно только до 220 В",
+        "correct": false
+      },
+      {
+        "text": "Только после отключения напряжения",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "ticket": 1,
+    "question": "Какой вид инструктажа проводится периодически на рабочем месте?",
+    "answers": [
+      {
+        "text": "Вводный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": false
+      },
+      {
+        "text": "Повторный",
+        "correct": true
+      },
+      {
+        "text": "Первичный",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "ticket": 1,
+    "question": "Можно ли приступать к работе при повреждении кабелей и отсутствии заземления оборудования?",
+    "answers": [
+      {
+        "text": "Можно при осторожной работе",
+        "correct": false
+      },
+      {
+        "text": "Можно с разрешения руководителя",
+        "correct": false
+      },
+      {
+        "text": "Разрешается временно",
+        "correct": false
+      },
+      {
+        "text": "Запрещается",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "ticket": 1,
+    "question": "Что должно входить в аптечку для временной остановки наружного кровотечения и перевязки ран?",
+    "answers": [
+      {
+        "text": "Таблетки и антисептики",
+        "correct": false
+      },
+      {
+        "text": "Только бинты",
+        "correct": false
+      },
+      {
+        "text": "Стерильные салфетки, бинты, лейкопластырь и жгут",
+        "correct": true
+      },
+      {
+        "text": "Только жгут и перекись водорода",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "ticket": 1,
+    "question": "Каким образом должно осуществляться оповещение людей о пожаре?",
+    "answers": [
+      {
+        "text": "Включение аварийного освещения",
+        "correct": true
+      },
+      {
+        "text": "Только сиреной",
+        "correct": false
+      },
+      {
+        "text": "Трансляция специально разработанных текстов об эвакуации и путях эвакуации",
+        "correct": true
+      },
+      {
+        "text": "Световыми/звуковыми сигналами и сообщениями об эвакуации",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "ticket": 1,
+    "question": "Какова рекомендуемая глубина продавливания грудной клетки при непрямом массаже сердца?",
+    "answers": [
+      {
+        "text": "2–3 см",
+        "correct": false
+      },
+      {
+        "text": "3–4 см",
+        "correct": false
+      },
+      {
+        "text": "5–6 см",
+        "correct": true
+      },
+      {
+        "text": "8–10 см",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "ticket": 1,
+    "question": "Кто обязан организовать расследование несчастного случая?",
+    "answers": [
+      {
+        "text": "Пострадавший",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": true
+      },
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Государственный инспектор",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "ticket": 1,
+    "question": "В какой срок работник обязан повторно пройти проверку знаний по охране труда при неудовлетворительном результате?",
+    "answers": [
+      {
+        "text": "В течение недели",
+        "correct": false
+      },
+      {
+        "text": "В течение 10 дней",
+        "correct": false
+      },
+      {
+        "text": "В течение месяца",
+        "correct": true
+      },
+      {
+        "text": "В течение 3 месяцев",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "ticket": 1,
+    "question": "Как часто должны проводиться эксплуатационные испытания пожарных лестниц и ограждений на крышах предназначенных для эвакуации",
+    "answers": [
+      {
+        "text": "не реже 1раза в год",
+        "correct": false
+      },
+      {
+        "text": "не реже 1 раза в 3 года",
+        "correct": false
+      },
+      {
+        "text": "не реже 1 раза в 5 лет",
+        "correct": true
+      },
+      {
+        "text": "не реже 1 раза в 10 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "ticket": 1,
+    "question": "В каком случае отказ в заключении трудового договора считается законным?",
+    "answers": [
+      {
+        "text": "По возрасту работника",
+        "correct": false
+      },
+      {
+        "text": "По семейному положению",
+        "correct": false
+      },
+      {
+        "text": "По деловым качествам работника",
+        "correct": true
+      },
+      {
+        "text": "По месту проживания",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "ticket": 1,
+    "question": "На какой максимальный срок можно продлить коллективный договор?",
+    "answers": [
+      {
+        "text": "На 1 год",
+        "correct": false
+      },
+      {
+        "text": "На 2 года",
+        "correct": false
+      },
+      {
+        "text": "На 3 года",
+        "correct": true
+      },
+      {
+        "text": "На 5 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "ticket": 1,
+    "question": "Что относится к основным направлениям государственной политики в области охраны труда?",
+    "answers": [
+      {
+        "text": "установление порядка проведения специальной оценки условий труда и экспертизы качества",
+        "correct": true
+      },
+      {
+        "text": "управление охраной труда, предупреждение производственного травматизма и профессиональных заболеваний",
+        "correct": true
+      },
+      {
+        "text": "Обеспечение приоритета сохранения жизни и здоровья работников",
+        "correct": true
+      },
+      {
+        "text": "обеспечение спецодеждой",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "ticket": 1,
+    "question": "Какой документ выдается работнику при неисполнении решения комиссии по трудовым спорам?",
+    "answers": [
+      {
+        "text": "Предписание",
+        "correct": false
+      },
+      {
+        "text": "Акт",
+        "correct": false
+      },
+      {
+        "text": "Удостоверение",
+        "correct": true
+      },
+      {
+        "text": "Протокол",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "ticket": 1,
+    "question": "Какой противопожарный инструктаж проводится при приеме на работу?",
+    "answers": [
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": false
+      },
+      {
+        "text": "Внеплановый",
+        "correct": false
+      },
+      {
+        "text": "Вводный",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "ticket": 1,
+    "question": "На сколько степеней подразделяются электротравмы по тяжести?",
+    "answers": [
+      {
+        "text": "На две",
+        "correct": false
+      },
+      {
+        "text": "На три",
+        "correct": false
+      },
+      {
+        "text": "На четыре",
+        "correct": true
+      },
+      {
+        "text": "На пять",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "ticket": 1,
+    "question": "В каком случае запрещается осмотр транспортного средства?",
+    "answers": [
+      {
+        "text": "на открытых площадках в плохую погоду создающих угрозу травмирования",
+        "correct": true
+      },
+      {
+        "text": "Во время движения транспортного средства\nC) осмотр моторного отсека при работающем двигателе ТС",
+        "correct": true
+      },
+      {
+        "text": "",
+        "correct": false
+      },
+      {
+        "text": "С эстакад, не оборудованных приспособлениями, обеспечивающими безопасное проведение работ",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "ticket": 1,
+    "question": "Что необходимо сделать при попадании химических веществ на кожу?",
+    "answers": [
+      {
+        "text": "Наложить повязку",
+        "correct": false
+      },
+      {
+        "text": "Протереть спиртом",
+        "correct": false
+      },
+      {
+        "text": "Промыть большим количеством воды",
+        "correct": true
+      },
+      {
+        "text": "Засыпать порошком",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "ticket": 1,
+    "question": "Что рекомендуется сделать при приступе эпилепсии у пострадавшего?",
+    "answers": [
+      {
+        "text": "Насильно удерживать человека",
+        "correct": false
+      },
+      {
+        "text": "Влить воду в рот",
+        "correct": false
+      },
+      {
+        "text": "Поместить под голову мягкий предмет(полотенце,одежду)",
+        "correct": true
+      },
+      {
+        "text": "Дать обезболивающее",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "ticket": 2,
+    "question": "Какое положение рекомендовано придать пострадавшему после восстановления дыхания?",
+    "answers": [
+      {
+        "text": "На спину",
+        "correct": false
+      },
+      {
+        "text": "Сидячее положение",
+        "correct": false
+      },
+      {
+        "text": "Боковое положение",
+        "correct": true
+      },
+      {
+        "text": "На живот",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "ticket": 2,
+    "question": "Какими путями химические вещества могут проникнуть в организм человека?",
+    "answers": [
+      {
+        "text": "Только через дыхательные пути",
+        "correct": false
+      },
+      {
+        "text": "Только через кожу",
+        "correct": false
+      },
+      {
+        "text": "Только через открытые раны",
+        "correct": false
+      },
+      {
+        "text": "Всеми перечисленными путями",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "ticket": 2,
+    "question": "Какими правами не обладают государственные инспекторы труда?",
+    "answers": [
+      {
+        "text": "Проводить проверки",
+        "correct": false
+      },
+      {
+        "text": "Выдавать предписания",
+        "correct": false
+      },
+      {
+        "text": "Отстранять работников от работы",
+        "correct": true
+      },
+      {
+        "text": "Запрашивать документы",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "ticket": 2,
+    "question": "Какова минимальная продолжительность стажировки на рабочем месте?",
+    "answers": [
+      {
+        "text": "1 смена",
+        "correct": false
+      },
+      {
+        "text": "Не менее 2 смен",
+        "correct": true
+      },
+      {
+        "text": "5 смен",
+        "correct": false
+      },
+      {
+        "text": "10 смен",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "ticket": 2,
+    "question": "Каким образом профсоюзы осуществляют контроль за охраной труда?",
+    "answers": [
+      {
+        "text": "Только через инспекции",
+        "correct": false
+      },
+      {
+        "text": "Только через уполномоченных лиц",
+        "correct": false
+      },
+      {
+        "text": "Только через профсоюзные органы",
+        "correct": false
+      },
+      {
+        "text": "Через все перечисленные структуры",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "ticket": 2,
+    "question": "Как должно быть обозначено место для курения?",
+    "answers": [
+      {
+        "text": "Табличкой «Курить разрешено»",
+        "correct": false
+      },
+      {
+        "text": "Красной линией",
+        "correct": false
+      },
+      {
+        "text": "Знаком «Место для курения»",
+        "correct": true
+      },
+      {
+        "text": "Любым обозначением",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "ticket": 2,
+    "question": "В течение какого срока работник может обратиться в комиссию по трудовым спорам со дня когда узнал о нарушении своих прав?",
+    "answers": [
+      {
+        "text": "в течении1 месяца",
+        "correct": false
+      },
+      {
+        "text": "в течении 3 месяцев",
+        "correct": true
+      },
+      {
+        "text": "в течении 6 месяцев",
+        "correct": false
+      },
+      {
+        "text": "в течении 1 года",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "ticket": 2,
+    "question": "Что относится к ключевым принципам политики в области охраны труда?",
+    "answers": [
+      {
+        "text": "Снижение зарплат",
+        "correct": false
+      },
+      {
+        "text": "Консультации с работниками и привлечение их к участию",
+        "correct": true
+      },
+      {
+        "text": "Увеличение рабочего времени",
+        "correct": false
+      },
+      {
+        "text": "Сокращение инструктажей",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "ticket": 2,
+    "question": "Как оформляется присвоение 1 группы по электробезопасности?",
+    "answers": [
+      {
+        "text": "Приказом",
+        "correct": false
+      },
+      {
+        "text": "Удостоверением",
+        "correct": false
+      },
+      {
+        "text": "Протоколом",
+        "correct": false
+      },
+      {
+        "text": "Записью в журнале с подписями проверяемого и проверяющего",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "ticket": 2,
+    "question": "Что считается прогулом в соответствии с ТК РФ?",
+    "answers": [
+      {
+        "text": "Отсутствие более 2 часов",
+        "correct": false
+      },
+      {
+        "text": "Отсутствие весь день",
+        "correct": false
+      },
+      {
+        "text": "Отсутствие более 4 часов подряд без уважительной причины",
+        "correct": true
+      },
+      {
+        "text": "Любое опоздание",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "ticket": 2,
+    "question": "На кого распространяется 1 группа по электробезопасности?",
+    "answers": [
+      {
+        "text": "Только на электриков",
+        "correct": false
+      },
+      {
+        "text": "На руководителей",
+        "correct": false
+      },
+      {
+        "text": "На неэлектротехнический персонал",
+        "correct": true
+      },
+      {
+        "text": "На всех работников",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "ticket": 2,
+    "question": "Какие работы относятся к работам на высоте?",
+    "answers": [
+      {
+        "text": "Работы выше 1 м",
+        "correct": false
+      },
+      {
+        "text": "Работы выше 1,5 м",
+        "correct": false
+      },
+      {
+        "text": "Работы с высоты 1,8 м и более",
+        "correct": true
+      },
+      {
+        "text": "Работы выше 1,2м",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "ticket": 2,
+    "question": "Какие требования безопасности предъявляются к рабочим местам?",
+    "answers": [
+      {
+        "text": "Освещенность и безопасность к быстрой эвакуации",
+        "correct": false
+      },
+      {
+        "text": "Не превышение уровня опасных и вредных факторов",
+        "correct": false
+      },
+      {
+        "text": "Соответствие конструкции размеров, расположения элементов",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленные требования",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "ticket": 2,
+    "question": "Что такое ненормированный рабочий день?",
+    "answers": [
+      {
+        "text": "Работа без выходных",
+        "correct": false
+      },
+      {
+        "text": "Работа сверхурочно ежедневно",
+        "correct": false
+      },
+      {
+        "text": "Особый режим с эпизодическим привлечением сверх нормы",
+        "correct": true
+      },
+      {
+        "text": "Работа по сменам",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "ticket": 2,
+    "question": "Какие объекты не относятся к опасным производственным объектам?",
+    "answers": [
+      {
+        "text": "Химические предприятия",
+        "correct": false
+      },
+      {
+        "text": "Газовые объекты",
+        "correct": false
+      },
+      {
+        "text": "Нефтебазы",
+        "correct": false
+      },
+      {
+        "text": "Объекты электросетевого хозяйства",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "ticket": 2,
+    "question": "Когда несчастный случай оформляется актом Н-1?",
+    "answers": [
+      {
+        "text": "При любом происшествии",
+        "correct": false
+      },
+      {
+        "text": "При признании несчастным случаем на производстве",
+        "correct": true
+      },
+      {
+        "text": "Только при тяжелой травме",
+        "correct": false
+      },
+      {
+        "text": "Только по решению суда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "ticket": 2,
+    "question": "Каким документом оформляется прием сотрудника на работу?",
+    "answers": [
+      {
+        "text": "Приказом",
+        "correct": false
+      },
+      {
+        "text": "Заявлением",
+        "correct": false
+      },
+      {
+        "text": "Трудовой книжкой",
+        "correct": false
+      },
+      {
+        "text": "Трудовым договором",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "ticket": 2,
+    "question": "Какой несчастный случай считается связанным с производством?",
+    "answers": [
+      {
+        "text": "Травма дома",
+        "correct": false
+      },
+      {
+        "text": "ДТП по пути на работу",
+        "correct": false
+      },
+      {
+        "text": "Повреждение здоровья из-за нарушения охраны труда",
+        "correct": true
+      },
+      {
+        "text": "Любое заболевание",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "ticket": 2,
+    "question": "Без какой детали нельзя использовать защитную каску?",
+    "answers": [
+      {
+        "text": "Без козырька",
+        "correct": false
+      },
+      {
+        "text": "Без наклейки",
+        "correct": false
+      },
+      {
+        "text": "Без подбородного ремня",
+        "correct": true
+      },
+      {
+        "text": "Без вентиляции",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "ticket": 2,
+    "question": "Что запрещается хранить на чердаках?",
+    "answers": [
+      {
+        "text": "Только жидкости",
+        "correct": false
+      },
+      {
+        "text": "Только газовые баллоны",
+        "correct": false
+      },
+      {
+        "text": "Только целлулоид",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленное",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "ticket": 3,
+    "question": "Какое положение следует придать пострадавшему при обмороке?",
+    "answers": [
+      {
+        "text": "На спину",
+        "correct": false
+      },
+      {
+        "text": "Сидячее",
+        "correct": false
+      },
+      {
+        "text": "Боковое положение",
+        "correct": true
+      },
+      {
+        "text": "На живот",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "ticket": 3,
+    "question": "По каким номерам вызывается скорая медицинская помощь?",
+    "answers": [
+      {
+        "text": "01",
+        "correct": false
+      },
+      {
+        "text": "02",
+        "correct": false
+      },
+      {
+        "text": "112, 101, 102, 103",
+        "correct": true
+      },
+      {
+        "text": "04",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "ticket": 3,
+    "question": "Кто может проводить присвоение 1 группы по электробезопасности?",
+    "answers": [
+      {
+        "text": "Любой руководитель",
+        "correct": false
+      },
+      {
+        "text": "Работник с группой II",
+        "correct": false
+      },
+      {
+        "text": "Работник с группой III или специалист по ОТ с IV группой",
+        "correct": true
+      },
+      {
+        "text": "Начальник отдела",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "ticket": 3,
+    "question": "Можно ли вправлять выпавшие внутренние органы?",
+    "answers": [
+      {
+        "text": "Можно после обработки",
+        "correct": false
+      },
+      {
+        "text": "Можно в стерильных перчатках",
+        "correct": false
+      },
+      {
+        "text": "Только врачу",
+        "correct": false
+      },
+      {
+        "text": "Запрещается в любом случае",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "ticket": 3,
+    "question": "Какой инструктаж проводится при нарушении требований охраны труда создавшие угрозу тяжких последствий?",
+    "answers": [
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Вводный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": false
+      },
+      {
+        "text": "Внеплановый",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "ticket": 3,
+    "question": "Как правильно выполнять непрямой массаж сердца?",
+    "answers": [
+      {
+        "text": "Одной рукой",
+        "correct": false
+      },
+      {
+        "text": "На ребрах",
+        "correct": false
+      },
+      {
+        "text": "Основанием ладони на центре груди, руки в замке",
+        "correct": true
+      },
+      {
+        "text": "Короткими толчками",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "ticket": 3,
+    "question": "На какие виды подразделяется искусственное освещение?",
+    "answers": [
+      {
+        "text": "Основное и резервное",
+        "correct": false
+      },
+      {
+        "text": "Только рабочее",
+        "correct": false
+      },
+      {
+        "text": "Рабочее, аварийное, охранное и дежурное",
+        "correct": true
+      },
+      {
+        "text": "Внутреннее и наружное",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "ticket": 3,
+    "question": "Какой локальный акт регулирует, прием на работу и увольнение, права, обязанности, ответственность, режим работы и отдыха работников?",
+    "answers": [
+      {
+        "text": "Коллективный договор",
+        "correct": false
+      },
+      {
+        "text": "Штатное расписание",
+        "correct": false
+      },
+      {
+        "text": "Правила внутреннего трудового распорядка",
+        "correct": true
+      },
+      {
+        "text": "Должностная инструкция",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "ticket": 3,
+    "question": "Как часто проводится специальная оценка условий труда?",
+    "answers": [
+      {
+        "text": "не реже 1 раза в год",
+        "correct": false
+      },
+      {
+        "text": "не реже 1 раза в 3 года",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в 5 лет",
+        "correct": true
+      },
+      {
+        "text": "Раз в 10 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "ticket": 3,
+    "question": "На кого возлагается организация санитарно-бытового обслуживания работников?",
+    "answers": [
+      {
+        "text": "На профсоюз",
+        "correct": false
+      },
+      {
+        "text": "На инженера по ОТ",
+        "correct": false
+      },
+      {
+        "text": "На работодателя",
+        "correct": true
+      },
+      {
+        "text": "На работников",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "ticket": 3,
+    "question": "Какая нормальная продолжительность рабочего времени в неделю?",
+    "answers": [
+      {
+        "text": "36 часов",
+        "correct": false
+      },
+      {
+        "text": "38 часов",
+        "correct": false
+      },
+      {
+        "text": "40 часов",
+        "correct": true
+      },
+      {
+        "text": "42 часа",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "ticket": 3,
+    "question": "Нужно ли предъявлять СНИЛС при заключении трудового договора?",
+    "answers": [
+      {
+        "text": "Не нужно",
+        "correct": false
+      },
+      {
+        "text": "Только иностранцам",
+        "correct": false
+      },
+      {
+        "text": "По желанию",
+        "correct": false
+      },
+      {
+        "text": "Нужно",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "ticket": 3,
+    "question": "Как называется фактор, который может привести к травме?",
+    "answers": [
+      {
+        "text": "Вредный",
+        "correct": false
+      },
+      {
+        "text": "Производственный",
+        "correct": false
+      },
+      {
+        "text": "Опасный",
+        "correct": true
+      },
+      {
+        "text": "Критический",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "ticket": 3,
+    "question": "Можно ли вскрывать ожоговые волдыри?",
+    "answers": [
+      {
+        "text": "Можно стерильной иглой",
+        "correct": false
+      },
+      {
+        "text": "Можно после обработки",
+        "correct": false
+      },
+      {
+        "text": "Только врачу",
+        "correct": false
+      },
+      {
+        "text": "Запрещено в любом случае",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "ticket": 3,
+    "question": "На какие классы подразделяются пожары?",
+    "answers": [
+      {
+        "text": "Только А, В, С",
+        "correct": false
+      },
+      {
+        "text": "А, В, С, D",
+        "correct": false
+      },
+      {
+        "text": "А, В, С, D, Е",
+        "correct": false
+      },
+      {
+        "text": "А, В, С, D, Е, F",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "ticket": 3,
+    "question": "Какая норма выдачи мыла для мытья рук?",
+    "answers": [
+      {
+        "text": "100 г",
+        "correct": false
+      },
+      {
+        "text": "150 г",
+        "correct": false
+      },
+      {
+        "text": "200 г мыла или 250 мл жидкого средства",
+        "correct": true
+      },
+      {
+        "text": "500 г",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "ticket": 3,
+    "question": "Какие требования не относятся к промышленной безопасности?",
+    "answers": [
+      {
+        "text": "Требования к оборудованию",
+        "correct": false
+      },
+      {
+        "text": "Требования к эксплуатации",
+        "correct": false
+      },
+      {
+        "text": "Требования к утилизации отходов",
+        "correct": true
+      },
+      {
+        "text": "Требования к персоналу",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "ticket": 3,
+    "question": "В какой форме производится присвоение 1 группы по электробезопасности?",
+    "answers": [
+      {
+        "text": "Только экзамен",
+        "correct": false
+      },
+      {
+        "text": "Только тестирование",
+        "correct": false
+      },
+      {
+        "text": "Инструктаж с устным опросом",
+        "correct": true
+      },
+      {
+        "text": "Выдача удостоверения",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "ticket": 3,
+    "question": "До какого напряжения можно тушить электрооборудование углекислотным огнетушителем?",
+    "answers": [
+      {
+        "text": "1 кВ",
+        "correct": false
+      },
+      {
+        "text": "5 кВ",
+        "correct": false
+      },
+      {
+        "text": "10 кВ",
+        "correct": true
+      },
+      {
+        "text": "35 кВ",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "ticket": 3,
+    "question": "Кто определяет перечень вредных факторов для СОУТ?",
+    "answers": [
+      {
+        "text": "Работодатель",
+        "correct": false
+      },
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Госинспектор",
+        "correct": false
+      },
+      {
+        "text": "Эксперт специализированной организации",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "ticket": 4,
+    "question": "Что регулирует коллективный договор?",
+    "answers": [
+      {
+        "text": "Только оплату труда",
+        "correct": false
+      },
+      {
+        "text": "Только режим работы",
+        "correct": false
+      },
+      {
+        "text": "Социально‑трудовые отношения между работниками и работодателем",
+        "correct": true
+      },
+      {
+        "text": "Только охрану труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "ticket": 4,
+    "question": "Как часто проводится повторный инструктаж для работников без работ повышенной опасности?",
+    "answers": [
+      {
+        "text": "Раз в месяц",
+        "correct": false
+      },
+      {
+        "text": "Раз в 3 месяца",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в 6 месяцев",
+        "correct": true
+      },
+      {
+        "text": "Раз в год",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "ticket": 4,
+    "question": "Какие сведения сообщают при вызове пожарной охраны?",
+    "answers": [
+      {
+        "text": "Только адрес",
+        "correct": false
+      },
+      {
+        "text": "Только место пожара",
+        "correct": false
+      },
+      {
+        "text": "Только фамилию",
+        "correct": false
+      },
+      {
+        "text": "Наименование объекта, адрес, место пожара и свою фамилию",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "ticket": 4,
+    "question": "К какой категории относится воздействие канцерогенных веществ?",
+    "answers": [
+      {
+        "text": "Физическое",
+        "correct": false
+      },
+      {
+        "text": "Биологическое",
+        "correct": false
+      },
+      {
+        "text": "Химическое",
+        "correct": true
+      },
+      {
+        "text": "Психофизиологическое",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "ticket": 4,
+    "question": "Что означает термин «опасность»?",
+    "answers": [
+      {
+        "text": "Несчастный случай",
+        "correct": false
+      },
+      {
+        "text": "Вредный фактор",
+        "correct": false
+      },
+      {
+        "text": "Потенциальный источник вреда жизни и здоровью",
+        "correct": true
+      },
+      {
+        "text": "Производственная травма",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "ticket": 4,
+    "question": "Кто обязан организовать оказание первой помощи пострадавшим?",
+    "answers": [
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Инженер по охране труда",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": true
+      },
+      {
+        "text": "Медицинский работник",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "ticket": 4,
+    "question": "Когда проводят повторный инструктаж работникам вахтового метода?",
+    "answers": [
+      {
+        "text": "Раз в месяц",
+        "correct": false
+      },
+      {
+        "text": "Перед отпуском",
+        "correct": false
+      },
+      {
+        "text": "В первый день после межвахтового отдыха",
+        "correct": true
+      },
+      {
+        "text": "Раз в полгода",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "ticket": 4,
+    "question": "Что не относится к обязанностям работника в области охраны труда?",
+    "answers": [
+      {
+        "text": "Соблюдать требования ОТ",
+        "correct": false
+      },
+      {
+        "text": "Использовать СИЗ",
+        "correct": false
+      },
+      {
+        "text": "Проходить медосмотры",
+        "correct": false
+      },
+      {
+        "text": "Обеспечивать хранение, уход, содержание СИЗ",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "ticket": 4,
+    "question": "Что должны знать лица с 1 группой по электробезопасности?",
+    "answers": [
+      {
+        "text": "Только правила эксплуатации",
+        "correct": false
+      },
+      {
+        "text": "Только устройство электроустановок",
+        "correct": false
+      },
+      {
+        "text": "Опасность электрического тока и меры безопасности и первой помощи",
+        "correct": true
+      },
+      {
+        "text": "Только правила пожарной безопасности",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 70,
+    "ticket": 4,
+    "question": "Какая ответственность предусмотрена за нарушение ОТ с причинением тяжкого вреда?",
+    "answers": [
+      {
+        "text": "Только выговор",
+        "correct": false
+      },
+      {
+        "text": "Только штраф",
+        "correct": false
+      },
+      {
+        "text": "Уголовная ответственность или крупный штраф, или исправительные работы, или увольнение",
+        "correct": true
+      },
+      {
+        "text": "Только увольнение",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 71,
+    "ticket": 4,
+    "question": "Можно ли использовать запас воды для пожаротушения в хозяйственных целях?",
+    "answers": [
+      {
+        "text": "Можно",
+        "correct": false
+      },
+      {
+        "text": "Можно частично",
+        "correct": false
+      },
+      {
+        "text": "Только с разрешения",
+        "correct": false
+      },
+      {
+        "text": "Не разрешается",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 72,
+    "ticket": 4,
+    "question": "Какая максимальная продолжительность сверхурочной работы в год?",
+    "answers": [
+      {
+        "text": "60 часов",
+        "correct": false
+      },
+      {
+        "text": "90 часов",
+        "correct": false
+      },
+      {
+        "text": "120 часов",
+        "correct": true
+      },
+      {
+        "text": "200 часов",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 73,
+    "ticket": 4,
+    "question": "Какова продолжительность ежегодного основного оплачиваемого отпуска?",
+    "answers": [
+      {
+        "text": "14 дней",
+        "correct": false
+      },
+      {
+        "text": "21 день",
+        "correct": false
+      },
+      {
+        "text": "28 календарных дней",
+        "correct": true
+      },
+      {
+        "text": "30 дней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 74,
+    "ticket": 4,
+    "question": "Что должно быть отключено в помещениях без дежурного персонала?",
+    "answers": [
+      {
+        "text": "Только освещение",
+        "correct": false
+      },
+      {
+        "text": "Только электроприборы",
+        "correct": false
+      },
+      {
+        "text": "Бытовые электроприборы и рабочее освещение",
+        "correct": true
+      },
+      {
+        "text": "Только компьютеры",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "ticket": 4,
+    "question": "Какое положение рекомендуется при травме позвоночника?",
+    "answers": [
+      {
+        "text": "Сидячее",
+        "correct": false
+      },
+      {
+        "text": "Боковое",
+        "correct": false
+      },
+      {
+        "text": "Лежа на спине на твердой поверхности",
+        "correct": true
+      },
+      {
+        "text": "На животе",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 76,
+    "ticket": 4,
+    "question": "Как выполняется иммобилизация конечности?",
+    "answers": [
+      {
+        "text": "Фиксацией одного сустава",
+        "correct": false
+      },
+      {
+        "text": "Эластичным бинтом",
+        "correct": false
+      },
+      {
+        "text": "Обездвиживанием двух соседних суставов",
+        "correct": true
+      },
+      {
+        "text": "Подвешиванием руки",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "ticket": 4,
+    "question": "Каково соотношение компрессий и вдохов при СЛР?",
+    "answers": [
+      {
+        "text": "15:2",
+        "correct": false
+      },
+      {
+        "text": "20:1",
+        "correct": false
+      },
+      {
+        "text": "30:2",
+        "correct": true
+      },
+      {
+        "text": "60:2",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 78,
+    "ticket": 4,
+    "question": "Как предпочтительнее останавливать наружное кровотечение?",
+    "answers": [
+      {
+        "text": "Жгутом",
+        "correct": false
+      },
+      {
+        "text": "Холодом",
+        "correct": false
+      },
+      {
+        "text": "Прямым давлением на рану",
+        "correct": true
+      },
+      {
+        "text": "Поднятием конечности",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 79,
+    "ticket": 4,
+    "question": "Кто является ответственным за безопасное ведение работ в электроустановках?",
+    "answers": [
+      {
+        "text": "Только ответственный руководитель, наблюдающий, производитель работ",
+        "correct": false
+      },
+      {
+        "text": "Только выдающий наряд",
+        "correct": false
+      },
+      {
+        "text": "Только утверждающий перечень работ",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленные лица",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 80,
+    "ticket": 4,
+    "question": "Как часто проводят тренировки по эвакуации на объектах с массовым пребыванием людей?",
+    "answers": [
+      {
+        "text": "Раз в год",
+        "correct": false
+      },
+      {
+        "text": "Раз в квартал",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в полугодие",
+        "correct": true
+      },
+      {
+        "text": "Раз в 5 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 81,
+    "ticket": 5,
+    "question": "Сохраняет ли действие коллективный договор при изменении наименования организации?",
+    "answers": [
+      {
+        "text": "Не сохраняет",
+        "correct": false
+      },
+      {
+        "text": "Только по решению суда",
+        "correct": false
+      },
+      {
+        "text": "Только на 1 месяц",
+        "correct": false
+      },
+      {
+        "text": "Сохраняет",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 82,
+    "ticket": 5,
+    "question": "Где учитывается несчастный случай при работе по совместительству?",
+    "answers": [
+      {
+        "text": "По основному месту работы",
+        "correct": false
+      },
+      {
+        "text": "В инспекции труда",
+        "correct": false
+      },
+      {
+        "text": "У работодателя по выбору",
+        "correct": false
+      },
+      {
+        "text": "По месту работы по совместительству",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 83,
+    "ticket": 5,
+    "question": "Кем проводится проверка знаний требований охраны труда у руководителей и специалистов?",
+    "answers": [
+      {
+        "text": "Работодателем",
+        "correct": false
+      },
+      {
+        "text": "Государственным инспектором",
+        "correct": false
+      },
+      {
+        "text": "Профсоюзом",
+        "correct": false
+      },
+      {
+        "text": "Комиссией по проверке знаний не менее 3 чел прошедших обучение по ОТ",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 84,
+    "ticket": 5,
+    "question": "Как часто проходят повторный инструктаж работники выполняющие работы повышенной опасности с традиционным методом работы?",
+    "answers": [
+      {
+        "text": "Раз в полгода",
+        "correct": false
+      },
+      {
+        "text": "Раз в год",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в 3 месяца",
+        "correct": true
+      },
+      {
+        "text": "Раз в 2 года",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 85,
+    "ticket": 5,
+    "question": "Какие виды инструктажей предусмотрены для водителей?",
+    "answers": [
+      {
+        "text": "вводный и специальный",
+        "correct": false
+      },
+      {
+        "text": "предрейсовый и сезонный",
+        "correct": false
+      },
+      {
+        "text": "специальный и сезонный",
+        "correct": false
+      },
+      {
+        "text": "вводный, предрейсовый, сезонный и специальный",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 86,
+    "ticket": 5,
+    "question": "Что имеет право делать работник службы охраны труда?",
+    "answers": [
+      {
+        "text": "Назначать наказания",
+        "correct": false
+      },
+      {
+        "text": "Увольнять работников",
+        "correct": false
+      },
+      {
+        "text": "Останавливать производство",
+        "correct": false
+      },
+      {
+        "text": "Выдавать обязательные предписания об устранении нарушений",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 87,
+    "ticket": 5,
+    "question": "Что понимается под опасным производственным фактором?",
+    "answers": [
+      {
+        "text": "Фактор, вызывающий усталость",
+        "correct": false
+      },
+      {
+        "text": "Вредное вещество",
+        "correct": false
+      },
+      {
+        "text": "Фактор, который может привести к травме или смерти",
+        "correct": true
+      },
+      {
+        "text": "Нарушение дисциплины",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 88,
+    "ticket": 5,
+    "question": "На какие группы делятся вещества по горючести?",
+    "answers": [
+      {
+        "text": "Твердые и жидкие",
+        "correct": false
+      },
+      {
+        "text": "Опасные и безопасные",
+        "correct": false
+      },
+      {
+        "text": "Негорючие, трудногорючие и горючие",
+        "correct": true
+      },
+      {
+        "text": "Воспламеняющиеся и невоспламеняющиеся",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 89,
+    "ticket": 5,
+    "question": "Какое положение оптимально при внутреннем кровотечении?",
+    "answers": [
+      {
+        "text": "Сидячее",
+        "correct": false
+      },
+      {
+        "text": "На животе",
+        "correct": false
+      },
+      {
+        "text": "Лежа с приподнятыми ногами",
+        "correct": true
+      },
+      {
+        "text": "Стоя",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 90,
+    "ticket": 5,
+    "question": "Допускается ли увольнение за появление на работе в состоянии опьянения?",
+    "answers": [
+      {
+        "text": "Не допускается",
+        "correct": false
+      },
+      {
+        "text": "Только по решению суда",
+        "correct": false
+      },
+      {
+        "text": "Только при повторном нарушении",
+        "correct": false
+      },
+      {
+        "text": "Допускается",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 91,
+    "ticket": 5,
+    "question": "Как часто проводится обучение работников рабочих профессий оказанию первой помощи?",
+    "answers": [
+      {
+        "text": "Раз в год",
+        "correct": false
+      },
+      {
+        "text": "Раз в 5 лет",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в 3 года",
+        "correct": true
+      },
+      {
+        "text": "По желанию работодателя",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 92,
+    "ticket": 5,
+    "question": "Что не соответствует принципам социального партнерства?",
+    "answers": [
+      {
+        "text": "Равноправие сторон",
+        "correct": false
+      },
+      {
+        "text": "Учет интересов работников",
+        "correct": false
+      },
+      {
+        "text": "Добровольность обязательств",
+        "correct": false
+      },
+      {
+        "text": "Приоритет решений работодателя",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 93,
+    "ticket": 5,
+    "question": "В каком случае проводится внеплановый инструктаж?",
+    "answers": [
+      {
+        "text": "Только при приеме на работу",
+        "correct": false
+      },
+      {
+        "text": "Только по графику",
+        "correct": false
+      },
+      {
+        "text": "При изменении оборудования или после аварий",
+        "correct": true
+      },
+      {
+        "text": "Только при увольнении",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 94,
+    "ticket": 5,
+    "question": "Как должен поступить работник при угрозе жизни или здоровью?",
+    "answers": [
+      {
+        "text": "Продолжить работу",
+        "correct": false
+      },
+      {
+        "text": "Сообщить коллегам",
+        "correct": false
+      },
+      {
+        "text": "Прекратить работу и сообщить руководителю",
+        "correct": true
+      },
+      {
+        "text": "Покинуть предприятие без уведомления",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 95,
+    "ticket": 5,
+    "question": "При какой высоте ограждений работы считаются работами на высоте при условии перепадов по высоте 1,8 м ?",
+    "answers": [
+      {
+        "text": "Менее 2 м",
+        "correct": false
+      },
+      {
+        "text": "Менее 1,5 м",
+        "correct": false
+      },
+      {
+        "text": "Менее 1,1 м",
+        "correct": true
+      },
+      {
+        "text": "Менее 0,5 м",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 96,
+    "ticket": 5,
+    "question": "Что не является целью оценки результатов деятельности по охране труда?",
+    "answers": [
+      {
+        "text": "Оценка эффективности",
+        "correct": false
+      },
+      {
+        "text": "Снижение травматизма",
+        "correct": false
+      },
+      {
+        "text": "Контроль условий труда",
+        "correct": false
+      },
+      {
+        "text": "Определение размера страховых выплат",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 97,
+    "ticket": 5,
+    "question": "Что является показателем микроклимата в производственных помещениях?",
+    "answers": [
+      {
+        "text": "Освещенность",
+        "correct": false
+      },
+      {
+        "text": "Шум",
+        "correct": false
+      },
+      {
+        "text": "Скорость движения воздуха",
+        "correct": true
+      },
+      {
+        "text": "Запыленность",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 98,
+    "ticket": 5,
+    "question": "Какое воздействие оказывает электрический ток на организм?",
+    "answers": [
+      {
+        "text": "Только термическое",
+        "correct": false
+      },
+      {
+        "text": "Только биологическое",
+        "correct": false
+      },
+      {
+        "text": "Только электролитическое",
+        "correct": false
+      },
+      {
+        "text": "Биологическое, электролитическое и термическое",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "ticket": 5,
+    "question": "Что входит в задачи обязательного соцстрахования от несчастных случаев?",
+    "answers": [
+      {
+        "text": "Контроль дисциплины",
+        "correct": false
+      },
+      {
+        "text": "Увеличение прибыли",
+        "correct": false
+      },
+      {
+        "text": "Социальная защита застрахованных и снижение профриска",
+        "correct": true
+      },
+      {
+        "text": "Только выплата штрафов",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "ticket": 5,
+    "question": "В какой срок расследуются несчастные случаи, о которых сообщили не сразу?",
+    "answers": [
+      {
+        "text": "3 дня",
+        "correct": false
+      },
+      {
+        "text": "15 дней",
+        "correct": false
+      },
+      {
+        "text": "1 месяц со дня заявления пострадавшего",
+        "correct": true
+      },
+      {
+        "text": "6 месяцев",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "ticket": 6,
+    "question": "Кто обязан исполнять указания руководителя тушения пожара?",
+    "answers": [
+      {
+        "text": "Только пожарные",
+        "correct": false
+      },
+      {
+        "text": "Только руководство",
+        "correct": false
+      },
+      {
+        "text": "Только работники объекта",
+        "correct": false
+      },
+      {
+        "text": "Все должностные лица и граждане на территории пожара",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "ticket": 6,
+    "question": "При каком состоянии необходимо оказывать первую помощь?",
+    "answers": [
+      {
+        "text": "При головной боли",
+        "correct": false
+      },
+      {
+        "text": "При усталости",
+        "correct": false
+      },
+      {
+        "text": "При кашле",
+        "correct": false
+      },
+      {
+        "text": "При наружном кровотечении",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "ticket": 6,
+    "question": "Какое положение рекомендуется при ожоге спины и ягодиц?",
+    "answers": [
+      {
+        "text": "На спине",
+        "correct": false
+      },
+      {
+        "text": "Сидя",
+        "correct": false
+      },
+      {
+        "text": "На животе",
+        "correct": true
+      },
+      {
+        "text": "На боку",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "ticket": 6,
+    "question": "Как определить наличие сознания у пострадавшего?",
+    "answers": [
+      {
+        "text": "Измерить давление",
+        "correct": false
+      },
+      {
+        "text": "Проверить пульс",
+        "correct": false
+      },
+      {
+        "text": "Потормошить за плечи и задать вопрос",
+        "correct": true
+      },
+      {
+        "text": "Поднести зеркало ко рту",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "ticket": 6,
+    "question": "В какой срок со дня проступка может быть применено дисциплинарное взыскание?",
+    "answers": [
+      {
+        "text": "3 дня",
+        "correct": false
+      },
+      {
+        "text": "2 недели",
+        "correct": false
+      },
+      {
+        "text": "Не позднее 1 месяца",
+        "correct": true
+      },
+      {
+        "text": "6 месяцев",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "ticket": 6,
+    "question": "К каким вредным факторам относится монотонность труда?",
+    "answers": [
+      {
+        "text": "Физическим",
+        "correct": false
+      },
+      {
+        "text": "Химическим",
+        "correct": false
+      },
+      {
+        "text": "Биологическим",
+        "correct": false
+      },
+      {
+        "text": "Психофизиологическим",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "ticket": 6,
+    "question": "Когда инструкции по охране труда пересматриваются досрочно?",
+    "answers": [
+      {
+        "text": "Раз в год",
+        "correct": false
+      },
+      {
+        "text": "После проверки",
+        "correct": false
+      },
+      {
+        "text": "При изменении условий труда",
+        "correct": true
+      },
+      {
+        "text": "По просьбе работников",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "ticket": 6,
+    "question": "Что происходит, если работник не прошел инструктаж по I группе электробезопасности?",
+    "answers": [
+      {
+        "text": "Увольняется",
+        "correct": false
+      },
+      {
+        "text": "Получает штраф",
+        "correct": false
+      },
+      {
+        "text": "Отстраняется от самостоятельной работы",
+        "correct": true
+      },
+      {
+        "text": "Переводится в другой отдел",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "ticket": 6,
+    "question": "Что относится к первичным средствам пожаротушения?",
+    "answers": [
+      {
+        "text": "Только огнетушители",
+        "correct": false
+      },
+      {
+        "text": "Только пожарные краны",
+        "correct": false
+      },
+      {
+        "text": "Только покрывала",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленное",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "ticket": 6,
+    "question": "Какой инструктаж проводится перед мероприятием в количестве более 100 человек?",
+    "answers": [
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Внеплановый",
+        "correct": false
+      },
+      {
+        "text": "Первичный",
+        "correct": false
+      },
+      {
+        "text": "Целевой противопожарный инструктаж",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 111,
+    "ticket": 6,
+    "question": "Первая помощь при травме головы?",
+    "answers": [
+      {
+        "text": "Наложить жгут",
+        "correct": false
+      },
+      {
+        "text": "Дать обезболивающее",
+        "correct": false
+      },
+      {
+        "text": "Остановить кровотечение прямым давлением на рану и приложить холод",
+        "correct": true
+      },
+      {
+        "text": "Посадить пострадавшего",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "ticket": 6,
+    "question": "На какое расстояние нужно оттащить пострадавшего от провода под напряжением?",
+    "answers": [
+      {
+        "text": "2 метра",
+        "correct": false
+      },
+      {
+        "text": "5 метров",
+        "correct": false
+      },
+      {
+        "text": "8 метров",
+        "correct": true
+      },
+      {
+        "text": "15 метров",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 113,
+    "ticket": 6,
+    "question": "Когда выдается трудовая книжка при увольнении?",
+    "answers": [
+      {
+        "text": "Через 3 дня",
+        "correct": false
+      },
+      {
+        "text": "Через неделю",
+        "correct": false
+      },
+      {
+        "text": "В день увольнения",
+        "correct": true
+      },
+      {
+        "text": "После расчета",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 114,
+    "ticket": 6,
+    "question": "Какие обязательства работодателя могут включаться в коллективный договор?",
+    "answers": [
+      {
+        "text": "Только зарплата",
+        "correct": false
+      },
+      {
+        "text": "Только режим работы",
+        "correct": false
+      },
+      {
+        "text": "Оздоровление и отдых работников и членов их семей",
+        "correct": true
+      },
+      {
+        "text": "Только дисциплина",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 115,
+    "ticket": 6,
+    "question": "Что не относится к обязанностям должностных лиц по охране труда?",
+    "answers": [
+      {
+        "text": "Контроль условий труда",
+        "correct": false
+      },
+      {
+        "text": "Организация инструктажей",
+        "correct": false
+      },
+      {
+        "text": "Выдача СИЗ",
+        "correct": false
+      },
+      {
+        "text": "Обеспечение профессионального обучения работников",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 116,
+    "ticket": 6,
+    "question": "Что вызывает головокружение и снижение работоспособности?",
+    "answers": [
+      {
+        "text": "Шум",
+        "correct": false
+      },
+      {
+        "text": "Вибрация",
+        "correct": false
+      },
+      {
+        "text": "Электромагнитные поля",
+        "correct": true
+      },
+      {
+        "text": "Освещение",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 117,
+    "ticket": 6,
+    "question": "Что необходимо сделать при управлении механизированными воротами?",
+    "answers": [
+      {
+        "text": "Нажать кнопки открывания до момента откл привода",
+        "correct": false
+      },
+      {
+        "text": "Снять запирающее устройство если на него заперто",
+        "correct": false
+      },
+      {
+        "text": "Убедиться в отсутствии людей и предметов в зоне движения",
+        "correct": false
+      },
+      {
+        "text": "все варианты",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 118,
+    "ticket": 6,
+    "question": "Верно ли, что извлекать инородные предметы из раны груди запрещается?",
+    "answers": [
+      {
+        "text": "Неверно",
+        "correct": false
+      },
+      {
+        "text": "Можно после обработки",
+        "correct": false
+      },
+      {
+        "text": "Можно осторожно",
+        "correct": false
+      },
+      {
+        "text": "Верно",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 119,
+    "ticket": 6,
+    "question": "Имеет ли право работодатель объявить строгий выговор?",
+    "answers": [
+      {
+        "text": "Имеет",
+        "correct": false
+      },
+      {
+        "text": "Только с согласия профсоюза",
+        "correct": false
+      },
+      {
+        "text": "Только по суду",
+        "correct": false
+      },
+      {
+        "text": "Не имеет права",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 120,
+    "ticket": 6,
+    "question": "Как удалять химические вещества из глаз?",
+    "answers": [
+      {
+        "text": "Салфеткой",
+        "correct": false
+      },
+      {
+        "text": "Спиртом",
+        "correct": false
+      },
+      {
+        "text": "Промывать водой от носа к виску",
+        "correct": true
+      },
+      {
+        "text": "Закрыть повязкой",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 121,
+    "ticket": 7,
+    "question": "Каким способом допускается понижать температуру тела при солнечном ударе?",
+    "answers": [
+      {
+        "text": "Холодным душем",
+        "correct": false
+      },
+      {
+        "text": "Льдом на все тело",
+        "correct": false
+      },
+      {
+        "text": "Полотенцами, смоченными холодной водой",
+        "correct": true
+      },
+      {
+        "text": "Горячим чаем",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 122,
+    "ticket": 7,
+    "question": "В какой срок вновь принятых сотрудников на работу проходят обучение по первой помощи?",
+    "answers": [
+      {
+        "text": "до10 дней",
+        "correct": false
+      },
+      {
+        "text": "не позднее 30 календарных дней",
+        "correct": false
+      },
+      {
+        "text": "Не позднее 60 календарных дней",
+        "correct": true
+      },
+      {
+        "text": "до 6 месяцев",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 123,
+    "ticket": 7,
+    "question": "Кто контролирует своевременность проверки знаний по охране труда?",
+    "answers": [
+      {
+        "text": "Работодатель",
+        "correct": false
+      },
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Органы федеральной инспекции труда",
+        "correct": true
+      },
+      {
+        "text": "МЧС",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 124,
+    "ticket": 7,
+    "question": "Что относится к переводу на другую работу?",
+    "answers": [
+      {
+        "text": "Изменение графика",
+        "correct": false
+      },
+      {
+        "text": "Изменение зарплаты",
+        "correct": false
+      },
+      {
+        "text": "Изменение трудовой функции или перевод в другую местность вместе с работодателем",
+        "correct": true
+      },
+      {
+        "text": "Выдача нового задания",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 125,
+    "ticket": 7,
+    "question": "В каком документе предусматриваются мероприятия по спасению людей при аварии?",
+    "answers": [
+      {
+        "text": "Инструкция по ОТ",
+        "correct": false
+      },
+      {
+        "text": "Паспорт объекта",
+        "correct": false
+      },
+      {
+        "text": "План мероприятий по локализации и ликвидации аварии ( ПМЛА)",
+        "correct": true
+      },
+      {
+        "text": "Наряд-допуск",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 126,
+    "ticket": 7,
+    "question": "Какими СИЗ должен быть оснащен работник от падения с высоты при спуске в емкость?",
+    "answers": [
+      {
+        "text": "Каской",
+        "correct": false
+      },
+      {
+        "text": "Очками",
+        "correct": false
+      },
+      {
+        "text": "Страховочной привязью с сигнально-спасательной веревкой",
+        "correct": true
+      },
+      {
+        "text": "Респиратором",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 127,
+    "ticket": 7,
+    "question": "Какая максимальная продолжительность рабочей недели при вредных условиях труда?",
+    "answers": [
+      {
+        "text": "40 часов",
+        "correct": false
+      },
+      {
+        "text": "38 часов",
+        "correct": false
+      },
+      {
+        "text": "36 часов",
+        "correct": true
+      },
+      {
+        "text": "24 часа",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 128,
+    "ticket": 7,
+    "question": "Что вправе делать работодатель в зависимости от специфики своей деятельности и исходя из оценки профриска?",
+    "answers": [
+      {
+        "text": "Применять приборы видео, аудио в целях контроля процесса производства работ",
+        "correct": true
+      },
+      {
+        "text": "Сокращать СИЗ",
+        "correct": false
+      },
+      {
+        "text": "Устанавливать дополнительные требования безопасности",
+        "correct": true
+      },
+      {
+        "text": "Отменять медосмотры",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 129,
+    "ticket": 7,
+    "question": "Что относится к опасным факторам пожара?",
+    "answers": [
+      {
+        "text": "Только дым",
+        "correct": false
+      },
+      {
+        "text": "Только высокая температура",
+        "correct": false
+      },
+      {
+        "text": "Только снижение кислорода",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленное",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 130,
+    "ticket": 7,
+    "question": "Кто проводит первичный, повторный и внеплановый инструктажи?",
+    "answers": [
+      {
+        "text": "Инженер по ОТ",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": false
+      },
+      {
+        "text": "Комиссия",
+        "correct": false
+      },
+      {
+        "text": "Непосредственный руководитель",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 131,
+    "ticket": 7,
+    "question": "Сколько ручных огнетушителей должно быть на каждом этаже общественных зданий?",
+    "answers": [
+      {
+        "text": "не менее 1",
+        "correct": false
+      },
+      {
+        "text": "не менее 2",
+        "correct": false
+      },
+      {
+        "text": "Не менее 4",
+        "correct": true
+      },
+      {
+        "text": "не менее 3",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 132,
+    "ticket": 7,
+    "question": "Через какое время вызывают скорую помощь, если сознание не восстанавливается?",
+    "answers": [
+      {
+        "text": "Через 5 минут",
+        "correct": false
+      },
+      {
+        "text": "Через 10 минут",
+        "correct": false
+      },
+      {
+        "text": "Через 30 минут",
+        "correct": false
+      },
+      {
+        "text": "Немедленно, время не нормируется",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 133,
+    "ticket": 7,
+    "question": "Что необходимо сделать при поражении бытовым электрическим током?",
+    "answers": [
+      {
+        "text": "воспользоваться выключателем, устройством автоотключением электричества",
+        "correct": true
+      },
+      {
+        "text": "Перенести пострадавшего",
+        "correct": false
+      },
+      {
+        "text": "Прекратить действие электрического тока",
+        "correct": true
+      },
+      {
+        "text": "Если на производстве дождаться аварийно-спасательную службу",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 134,
+    "ticket": 7,
+    "question": "Что является признаком теплового удара?",
+    "answers": [
+      {
+        "text": "Только температура",
+        "correct": false
+      },
+      {
+        "text": "Только слабость",
+        "correct": false
+      },
+      {
+        "text": "Только тошнота",
+        "correct": false
+      },
+      {
+        "text": "Все перечисленные признаки",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 135,
+    "ticket": 7,
+    "question": "На сколько классов подразделяется электрооборудование по защите от поражения током?",
+    "answers": [
+      {
+        "text": "2",
+        "correct": false
+      },
+      {
+        "text": "3",
+        "correct": false
+      },
+      {
+        "text": "4 класса",
+        "correct": true
+      },
+      {
+        "text": "5",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 136,
+    "ticket": 7,
+    "question": "Допускаются ли огневые работы на взрывопожароопасных объектах?",
+    "answers": [
+      {
+        "text": "Нет",
+        "correct": false
+      },
+      {
+        "text": "Только ночью",
+        "correct": false
+      },
+      {
+        "text": "Только по распоряжению",
+        "correct": false
+      },
+      {
+        "text": "В исключительных случаях",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 137,
+    "ticket": 7,
+    "question": "В каких пределах работник несет ограниченную материальную ответственность?",
+    "answers": [
+      {
+        "text": "Полный ущерб",
+        "correct": false
+      },
+      {
+        "text": "50% зарплаты",
+        "correct": false
+      },
+      {
+        "text": "В пределах среднего месячного заработка",
+        "correct": true
+      },
+      {
+        "text": "Не несет ответственности",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 138,
+    "ticket": 7,
+    "question": "В каком случае нельзя привлекать работника к сверхурочной работе без согласия?",
+    "answers": [
+      {
+        "text": "При аварии",
+        "correct": false
+      },
+      {
+        "text": "При ЧС",
+        "correct": false
+      },
+      {
+        "text": "При общественно необходимых работах по обеспечению систем жизнеобеспечения",
+        "correct": true
+      },
+      {
+        "text": "При стихийном бедствии",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 139,
+    "ticket": 7,
+    "question": "Когда допускается прекратить сердечно-легочную реанимацию?",
+    "answers": [
+      {
+        "text": "При сильной физической усталости",
+        "correct": true
+      },
+      {
+        "text": "При прибытии скорой",
+        "correct": true
+      },
+      {
+        "text": "При появлении угрозы для раненого",
+        "correct": true
+      },
+      {
+        "text": "Появление явных признаков жизни",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 140,
+    "ticket": 7,
+    "question": "Что является признаком ранения грудной клетки?",
+    "answers": [
+      {
+        "text": "Синяк",
+        "correct": false
+      },
+      {
+        "text": "Покраснение",
+        "correct": false
+      },
+      {
+        "text": "Кровотечение на груди, подсасывание воздуха и пузыри из раны",
+        "correct": true
+      },
+      {
+        "text": "Отек",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 141,
+    "ticket": 8,
+    "question": "В каком случае допускается вручную удалять твердый предмет из дыхательных путей для устранения их непроходимости?",
+    "answers": [
+      {
+        "text": "В случае, если пострадавший находится в сознании и может кашлять",
+        "correct": false
+      },
+      {
+        "text": "В случае, если пострадавший жалуется на затрудненное дыхание, но предмет не виден",
+        "correct": false
+      },
+      {
+        "text": "В случае, если твердое тело находится глубоко в дыхательных путях и его можно попытаться достать пальцами",
+        "correct": false
+      },
+      {
+        "text": "В случае, если твердое тело виднеется в дыхательных путях",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 142,
+    "ticket": 8,
+    "question": "Что необходимо сделать, если давящая повязка начинает промокать?",
+    "answers": [
+      {
+        "text": "Снять промокшую давящую повязку, обработать рану и наложить новую повязку",
+        "correct": false
+      },
+      {
+        "text": "Ослабить давящую повязку, чтобы восстановить кровообращение в поврежденной конечности",
+        "correct": false
+      },
+      {
+        "text": "Наложить кровоостанавливающий жгут выше места ранения независимо от интенсивности кровотечения",
+        "correct": false
+      },
+      {
+        "text": "Наложить поверх давящей повязки несколько плотно свернутых салфеток, крепко надавить ладонью поверх повязки, туго забинтовать",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 143,
+    "ticket": 8,
+    "question": "Какой должна быть продолжительность одного выдоха при проведении искусственного дыхания?",
+    "answers": [
+      {
+        "text": "0,5 секунды",
+        "correct": false
+      },
+      {
+        "text": "1 секунда",
+        "correct": true
+      },
+      {
+        "text": "2 секунды",
+        "correct": false
+      },
+      {
+        "text": "3 секунды",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 144,
+    "ticket": 8,
+    "question": "В какие сроки должно быть проведено расследование несчастного случая, в результате которого один или несколько пострадавших получили тяжелые повреждения здоровья, либо несчастного случая со смертельным исходом?",
+    "answers": [
+      {
+        "text": "В течение 3 дней",
+        "correct": false
+      },
+      {
+        "text": "В течение 7 дней",
+        "correct": false
+      },
+      {
+        "text": "В течение 15 дней",
+        "correct": true
+      },
+      {
+        "text": "В течение 1 месяца",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 145,
+    "ticket": 8,
+    "question": "В каком из перечисленных случаев проводится целевой инструктаж по пожарной безопасности?",
+    "answers": [
+      {
+        "text": "Перед началом самостоятельной работы лиц, впервые принятых на работу в организацию",
+        "correct": false
+      },
+      {
+        "text": "При введении в действие новых или внесении изменений в нормативные правовые акты по пожарной безопасности",
+        "correct": false
+      },
+      {
+        "text": "Перед выполнением других огневых, пожароопасных и пожаровзрывоопасных работ, в том числе не связанных с прямыми обязанностями по специальности, профессии",
+        "correct": true
+      },
+      {
+        "text": "При перерыве в осуществлении трудовой или служебной деятельности более чем на 60 календарных дней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 146,
+    "ticket": 8,
+    "question": "В каком из перечисленных случаев проводится целевой инструктаж по охране труда?",
+    "answers": [
+      {
+        "text": "Перед проведением работ, выполнение которых допускается только под непрерывным контролем работодателя, работ повышенной опасности, в том числе работ, на производство которых требуется оформление наряда-допуска и других распорядительных документов",
+        "correct": true
+      },
+      {
+        "text": "Перед выполнением работ на объектах повышенной опасности, а также непосредственно на проезжей части автомобильных дорог или железнодорожных путях, связанных с прямыми обязанностями работника, на которых требуется соблюдение дополнительных требований охраны труда",
+        "correct": true
+      },
+      {
+        "text": "Перед выполнением работ, не относящихся к основному технологическому процессу и не предусмотренных должностными инструкциями, в том числе вне цеха, участка, погрузочно-разгрузочных работ, работ по уборке территорий, работ на проезжей части дорог и железнодорожных путях",
+        "correct": true
+      },
+      {
+        "text": "Перед выполнением работ по ликвидации последствий чрезвычайных ситуаций",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 147,
+    "ticket": 8,
+    "question": "Пожар какого класса можно потушить водным огнетушителем?",
+    "answers": [
+      {
+        "text": "При пожаре класса А",
+        "correct": true
+      },
+      {
+        "text": "При пожаре класса В",
+        "correct": false
+      },
+      {
+        "text": "При пожаре класса С",
+        "correct": false
+      },
+      {
+        "text": "При пожаре класса Е",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 148,
+    "ticket": 8,
+    "question": "Имеет ли обязательную силу предписание специалиста по охране труда?",
+    "answers": [
+      {
+        "text": "Предписание специалиста по охране труда носит рекомендательный характер",
+        "correct": false
+      },
+      {
+        "text": "Предписание обязательно только после утверждения руководителем организации",
+        "correct": false
+      },
+      {
+        "text": "Предписание обязательно только для работников рабочих профессий",
+        "correct": false
+      },
+      {
+        "text": "Предписание является обязательным для исполнения",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 149,
+    "ticket": 8,
+    "question": "С какой целью проводится специальная оценка условий труда на рабочих местах?",
+    "answers": [
+      {
+        "text": "Для оценки условий труда на рабочих местах и выявления опасных и (или) вредных факторов",
+        "correct": true
+      },
+      {
+        "text": "Для оценки квалификации работников и проверки знания требований охраны труда",
+        "correct": false
+      },
+      {
+        "text": "Для определения размера заработной платы работников и системы премирования",
+        "correct": false
+      },
+      {
+        "text": "Для оформления допуска работников к выполнению работ повышенной опасности",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 150,
+    "ticket": 8,
+    "question": "С какой периодичностью углекислотные огнетушители подлежат перезарядке?",
+    "answers": [
+      {
+        "text": "Не реже одного раза в год",
+        "correct": false
+      },
+      {
+        "text": "Не реже одного раза в три года",
+        "correct": false
+      },
+      {
+        "text": "Не реже одного раза в пять лет",
+        "correct": true
+      },
+      {
+        "text": "Не реже одного раза в десять лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 151,
+    "ticket": 8,
+    "question": "Что относится к качественным показателям освещения?",
+    "answers": [
+      {
+        "text": "Световой поток",
+        "correct": false
+      },
+      {
+        "text": "Мощность источника света",
+        "correct": false
+      },
+      {
+        "text": "Освещенность",
+        "correct": true
+      },
+      {
+        "text": "Напряжение питающей сети",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 152,
+    "ticket": 8,
+    "question": "В каком случае переносить пострадавшего необходимо головой вперед?",
+    "answers": [
+      {
+        "text": "В случае спуска по лестнице",
+        "correct": false
+      },
+      {
+        "text": "В случае подъема по лестнице",
+        "correct": true
+      },
+      {
+        "text": "При переноске пострадавшего по ровной поверхности",
+        "correct": false
+      },
+      {
+        "text": "При переноске пострадавшего в одиночку на плече",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 153,
+    "ticket": 8,
+    "question": "Перед началом работы с электроинструментом какие требования должны быть выполнены?",
+    "answers": [
+      {
+        "text": "Работник должен только проверить наличие маркировки электроинструмента и исправность выключателя",
+        "correct": false
+      },
+      {
+        "text": "Работник должен только убедиться в наличии инструкции по эксплуатации и средств индивидуальной защиты",
+        "correct": false
+      },
+      {
+        "text": "Работник, назначенный работодателем ответственным за содержание электроинструмента в исправном состоянии, должен проверять исправность электроинструмента, исправность цепи заземления электроинструмента и отсутствие замыкания обмоток на корпус, работу электроинструмента на холостом ходу",
+        "correct": true
+      },
+      {
+        "text": "Работник должен проверить только отсутствие внешних повреждений корпуса электроинструмента и питающего кабеля",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 154,
+    "ticket": 8,
+    "question": "Кто несет ответственность за организацию и своевременность обучения по охране труда и проверку знаний требований охраны труда работников организации?",
+    "answers": [
+      {
+        "text": "Специалист по охране труда",
+        "correct": false
+      },
+      {
+        "text": "Непосредственный руководитель работ",
+        "correct": false
+      },
+      {
+        "text": "Комиссия по проверке знаний требований охраны труда",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 155,
+    "ticket": 8,
+    "question": "Что допускается делать во время оказания первой помощи при отморожениях?",
+    "answers": [
+      {
+        "text": "Растирать отмороженные участки тела снегом или жесткой тканью",
+        "correct": false
+      },
+      {
+        "text": "Прокалывать образовавшиеся пузыри на отмороженных участках тела",
+        "correct": false
+      },
+      {
+        "text": "Быстро согревать отмороженные участки тела у открытого огня или нагревательных приборов",
+        "correct": false
+      },
+      {
+        "text": "Укутывать отмороженные участки тела в несколько слоев",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 156,
+    "ticket": 8,
+    "question": "Какие цели преследует оказание первой помощи пострадавшему?",
+    "answers": [
+      {
+        "text": "Только обезболивание пострадавшего и подготовка к транспортировке",
+        "correct": false
+      },
+      {
+        "text": "Только вызов скорой медицинской помощи и ожидание специалистов",
+        "correct": false
+      },
+      {
+        "text": "Устранение явлений, угрожающих жизни, а также предупреждение дальнейших повреждений и возможных осложнений",
+        "correct": true
+      },
+      {
+        "text": "Только оформление сообщения о происшествии и передача информации руководителю",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 157,
+    "ticket": 8,
+    "question": "Какие основные проявления при отравлении?",
+    "answers": [
+      {
+        "text": "Внезапно развившиеся тошнота, рвота, понос, боли в груди или животе",
+        "correct": true
+      },
+      {
+        "text": "Затруднение дыхания, потливость, слюнотечение",
+        "correct": true
+      },
+      {
+        "text": "Потеря сознания, мышечные подергивания и судороги, ожоги вокруг губ, на языке или на коже, неестественный цвет кожи, ранки на ней",
+        "correct": true
+      },
+      {
+        "text": "Странная манера поведения человека, необычный запах изо рта",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 158,
+    "ticket": 8,
+    "question": "Является ли препятствием для применения дисциплинарного взыскания отказ работника дать объяснение?",
+    "answers": [
+      {
+        "text": "Является препятствием во всех случаях",
+        "correct": false
+      },
+      {
+        "text": "Является препятствием только при первичном нарушении",
+        "correct": false
+      },
+      {
+        "text": "Является препятствием только при отсутствии свидетелей нарушения",
+        "correct": false
+      },
+      {
+        "text": "Не является",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 159,
+    "ticket": 8,
+    "question": "Кто должен организовать хранение актов формы Н-1 и других документов по расследованию несчастных случаев на производстве?",
+    "answers": [
+      {
+        "text": "Пострадавший работник или его доверенное лицо",
+        "correct": false
+      },
+      {
+        "text": "Председатель комиссии по расследованию несчастного случая",
+        "correct": false
+      },
+      {
+        "text": "Руководитель подразделения, с работником которого произошел несчастный случай",
+        "correct": true
+      },
+      {
+        "text": "Государственный инспектор труда, участвующий в расследовании",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 160,
+    "ticket": 8,
+    "question": "Требуется ли согласие работника для перенесения отпуска на следующий рабочий год?",
+    "answers": [
+      {
+        "text": "Не требуется, если перенос отпуска оформлен приказом работодателя",
+        "correct": false
+      },
+      {
+        "text": "Не требуется, если перенос отпуска связан с производственной необходимостью",
+        "correct": false
+      },
+      {
+        "text": "Требуется",
+        "correct": true
+      },
+      {
+        "text": "Требуется только при переносе отпуска более чем на 14 календарных дней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 161,
+    "ticket": 9,
+    "question": "Какое из перечисленных медицинских изделий должно входить в комплект аптечки для оказания первой помощи работникам?",
+    "answers": [
+      {
+        "text": "Бинт марлевый стерильный",
+        "correct": false
+      },
+      {
+        "text": "Жгут кровоостанавливающий",
+        "correct": false
+      },
+      {
+        "text": "Маска медицинская нестерильная одноразовая",
+        "correct": true
+      },
+      {
+        "text": "Термометр медицинский",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 162,
+    "ticket": 9,
+    "question": "Источником каких опасных и вредных производственных факторов трудового процесса является сам работающий?",
+    "answers": [
+      {
+        "text": "Физических факторов",
+        "correct": false
+      },
+      {
+        "text": "Химических факторов",
+        "correct": false
+      },
+      {
+        "text": "Биологических факторов",
+        "correct": false
+      },
+      {
+        "text": "Личностно-поведенческих факторов",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 163,
+    "ticket": 9,
+    "question": "Какой из перечисленных производственных факторов не может быть обнаружен органолептически?",
+    "answers": [
+      {
+        "text": "Запыленность воздуха",
+        "correct": false
+      },
+      {
+        "text": "Шум",
+        "correct": false
+      },
+      {
+        "text": "Повышенная температура воздуха",
+        "correct": false
+      },
+      {
+        "text": "Электрический потенциал",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 164,
+    "ticket": 9,
+    "question": "При каком из перечисленных состояний необходимо, в соответствии с законодательством, оказывать первую помощь?",
+    "answers": [
+      {
+        "text": "При головной боли",
+        "correct": false
+      },
+      {
+        "text": "При усталости",
+        "correct": false
+      },
+      {
+        "text": "При наружном кровотечении",
+        "correct": true
+      },
+      {
+        "text": "При повышении температуры тела",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 165,
+    "ticket": 9,
+    "question": "При появлении неисправностей электроустройства следует?",
+    "answers": [
+      {
+        "text": "Продолжить работу до окончания смены",
+        "correct": false
+      },
+      {
+        "text": "Самостоятельно разобрать и устранить неисправность",
+        "correct": false
+      },
+      {
+        "text": "Обесточить, а переносные приборы выключить, отсоединить от сети и сообщить непосредственному руководителю",
+        "correct": true
+      },
+      {
+        "text": "Передать устройство другому работнику",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 166,
+    "ticket": 9,
+    "question": "Необходима ли стажировка работника по охране труда на рабочем месте?",
+    "answers": [
+      {
+        "text": "Необходима для всех работников без исключения",
+        "correct": false
+      },
+      {
+        "text": "Не требуется ни для одной категории работников",
+        "correct": false
+      },
+      {
+        "text": "Необходима только руководителям подразделений",
+        "correct": false
+      },
+      {
+        "text": "Необходима для рабочих профессий, выполняющих работы повышенной опасности и (или) занятых управлением транспортными средствами",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 167,
+    "ticket": 9,
+    "question": "За сколько дней работодатель обязан предупредить работника о расторжении трудового договора при неудовлетворительном результате испытания?",
+    "answers": [
+      {
+        "text": "Не позднее 1 дня",
+        "correct": false
+      },
+      {
+        "text": "Не позднее 3 дней",
+        "correct": true
+      },
+      {
+        "text": "Не позднее 7 дней",
+        "correct": false
+      },
+      {
+        "text": "Не позднее 14 дней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 168,
+    "ticket": 9,
+    "question": "В каком порядке допускаются работники к стажировке по охране труда?",
+    "answers": [
+      {
+        "text": "После прохождения медицинского осмотра",
+        "correct": false
+      },
+      {
+        "text": "После оформления трудового договора",
+        "correct": false
+      },
+      {
+        "text": "После успешно прошедших инструктаж по охране труда и обучение требованиям охраны труда",
+        "correct": true
+      },
+      {
+        "text": "После получения удостоверения по охране труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 169,
+    "ticket": 9,
+    "question": "По каким участкам производится обход охраняемых объектов?",
+    "answers": [
+      {
+        "text": "По любым участкам территории независимо от их состояния",
+        "correct": false
+      },
+      {
+        "text": "По участкам, определяемым работником самостоятельно",
+        "correct": false
+      },
+      {
+        "text": "По участкам территорий, на которых отсутствуют препятствия в виде загроможденности и захламленности оборудованием, материалами и отходами производств, ям, траншей, кюветов, колодцев подземных коммуникаций, резервуаров с водой",
+        "correct": true
+      },
+      {
+        "text": "Только по дорогам общего пользования",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 170,
+    "ticket": 9,
+    "question": "Какие обязательства работодателя могут включаться в коллективный договор?",
+    "answers": [
+      {
+        "text": "По вопросам дисциплинарной ответственности работников",
+        "correct": false
+      },
+      {
+        "text": "По вопросам изменения структуры организации",
+        "correct": false
+      },
+      {
+        "text": "По вопросам оздоровления и отдыха работников и членов их семей",
+        "correct": true
+      },
+      {
+        "text": "По вопросам передачи имущества организации работникам",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 171,
+    "ticket": 9,
+    "question": "Для тушения каких пожаров применяют воздушно-пенные огнетушители?",
+    "answers": [
+      {
+        "text": "Только для тушения пожаров класса А и В",
+        "correct": true
+      },
+      {
+        "text": "Только для тушения пожаров класса С",
+        "correct": false
+      },
+      {
+        "text": "Только для тушения пожаров класса Е",
+        "correct": false
+      },
+      {
+        "text": "Для тушения всех классов пожаров",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 172,
+    "ticket": 9,
+    "question": "В каком случае допускается переноска пострадавшего в одиночку на плече?",
+    "answers": [
+      {
+        "text": "При наличии подозрения на травму позвоночника",
+        "correct": false
+      },
+      {
+        "text": "При нахождении пострадавшего в сознании",
+        "correct": false
+      },
+      {
+        "text": "При нахождении пострадавшего без сознания",
+        "correct": true
+      },
+      {
+        "text": "При переломах нижних конечностей",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 173,
+    "ticket": 9,
+    "question": "Что должны делать работники при нахождении в зонах повышенной опасности?",
+    "answers": [
+      {
+        "text": "Быть одеты в сигнальные жилеты",
+        "correct": true
+      },
+      {
+        "text": "Иметь на форменной одежде световозвращающие элементы",
+        "correct": true
+      },
+      {
+        "text": "Передвигаться только группами не менее двух человек",
+        "correct": false
+      },
+      {
+        "text": "Использовать средства связи при каждом перемещении",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 174,
+    "ticket": 9,
+    "question": "Можно ли эксплуатировать неисправные отопительные приборы?",
+    "answers": [
+      {
+        "text": "Можно до окончания отопительного сезона",
+        "correct": false
+      },
+      {
+        "text": "Можно при постоянном наблюдении",
+        "correct": false
+      },
+      {
+        "text": "Эксплуатировать данные приборы запрещено",
+        "correct": true
+      },
+      {
+        "text": "Можно при наличии огнетушителя рядом",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 175,
+    "ticket": 9,
+    "question": "Когда должен проводиться первичный инструктаж по охране труда на рабочем месте?",
+    "answers": [
+      {
+        "text": "После окончания испытательного срока",
+        "correct": false
+      },
+      {
+        "text": "После допуска к самостоятельной работе",
+        "correct": false
+      },
+      {
+        "text": "До начала самостоятельной работы",
+        "correct": true
+      },
+      {
+        "text": "В течение первого месяца работы",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 176,
+    "ticket": 9,
+    "question": "Что обязан делать работник в сфере охраны труда?",
+    "answers": [
+      {
+        "text": "Проходить обучение, инструктажи, стажировку и проверку знаний требований охраны труда",
+        "correct": true
+      },
+      {
+        "text": "Немедленно извещать руководителя о ситуациях, угрожающих жизни и здоровью людей",
+        "correct": true
+      },
+      {
+        "text": "Проходить обязательные медицинские осмотры и психиатрические освидетельствования",
+        "correct": true
+      },
+      {
+        "text": "Соблюдать требования охраны труда и правильно применять средства индивидуальной и коллективной защиты",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 177,
+    "ticket": 9,
+    "question": "Какие из перечисленных выходов из зданий и сооружений могут быть эвакуационными?",
+    "answers": [
+      {
+        "text": "Выходы из подвальных помещений через производственные помещения",
+        "correct": false
+      },
+      {
+        "text": "Выходы через помещения категории В1",
+        "correct": false
+      },
+      {
+        "text": "Выходы из помещений первого этажа наружу через коридор и лестничную клетку",
+        "correct": true
+      },
+      {
+        "text": "Выходы через лифтовые шахты",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 178,
+    "ticket": 9,
+    "question": "Какой вид инструктажа проводится при поступлении нового работника в компанию или при смене должности одного и того же сотрудника?",
+    "answers": [
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": false
+      },
+      {
+        "text": "Внеплановый",
+        "correct": false
+      },
+      {
+        "text": "Вводный",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 179,
+    "ticket": 9,
+    "question": "Кто не включается в состав комиссии по расследованию несчастного случая, если пострадавший получил легкие повреждения здоровья?",
+    "answers": [
+      {
+        "text": "Специалист по охране труда",
+        "correct": false
+      },
+      {
+        "text": "Представитель работодателя",
+        "correct": false
+      },
+      {
+        "text": "Представитель профсоюза",
+        "correct": false
+      },
+      {
+        "text": "Руководитель объекта (участка), где произошел несчастный случай",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 180,
+    "ticket": 9,
+    "question": "В каком случае на работника возлагается материальная ответственность в полном размере причиненного ущерба?",
+    "answers": [
+      {
+        "text": "При любом причинении ущерба работодателю",
+        "correct": false
+      },
+      {
+        "text": "При наличии письменного замечания работодателя",
+        "correct": false
+      },
+      {
+        "text": "В случае возбуждения уголовного дела в связи с действиями работника, причинившими ущерб",
+        "correct": true
+      },
+      {
+        "text": "Только при наличии решения суда о взыскании ущерба",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 181,
+    "ticket": 10,
+    "question": "На какое максимальное время накладывается кровоостанавливающий жгут на конечность?",
+    "answers": [
+      {
+        "text": "Не более 30 минут",
+        "correct": false
+      },
+      {
+        "text": "Не более 1 часа",
+        "correct": false
+      },
+      {
+        "text": "Срок наложения жгута на конечность составляет 2 часа независимо от температуры окружающей среды",
+        "correct": true
+      },
+      {
+        "text": "Не более 4 часов",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 182,
+    "ticket": 10,
+    "question": "Какие дисциплинарные взыскания имеет право применить работодатель?",
+    "answers": [
+      {
+        "text": "Замечание",
+        "correct": true
+      },
+      {
+        "text": "Выговор",
+        "correct": true
+      },
+      {
+        "text": "Увольнение по соответствующим основаниям",
+        "correct": true
+      },
+      {
+        "text": "Строгий выговор",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 183,
+    "ticket": 10,
+    "question": "Может ли в трудовом договоре предусматриваться обучение работника за счет работодателя?",
+    "answers": [
+      {
+        "text": "Не может предусматриваться",
+        "correct": false
+      },
+      {
+        "text": "Может только для руководителей",
+        "correct": false
+      },
+      {
+        "text": "Может, в случаях, определенных коллективным договором или соглашением",
+        "correct": true
+      },
+      {
+        "text": "Может только после испытательного срока",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 184,
+    "ticket": 10,
+    "question": "Как часто должны перезаряжаться огнетушители, используемые для защиты транспортных средств?",
+    "answers": [
+      {
+        "text": "Не реже одного раза в год",
+        "correct": false
+      },
+      {
+        "text": "Не реже одного раза в три года",
+        "correct": false
+      },
+      {
+        "text": "Не реже одного раза в пять лет",
+        "correct": true
+      },
+      {
+        "text": "Только после использования",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 185,
+    "ticket": 10,
+    "question": "Что из перечисленного входит в перечень мероприятий по оказанию первой помощи?",
+    "answers": [
+      {
+        "text": "Придание пострадавшему оптимального положения тела",
+        "correct": true
+      },
+      {
+        "text": "Назначение лекарственных препаратов",
+        "correct": false
+      },
+      {
+        "text": "Проведение хирургических манипуляций",
+        "correct": false
+      },
+      {
+        "text": "Самостоятельная транспортировка в медицинскую организацию без оценки состояния",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 186,
+    "ticket": 10,
+    "question": "Что необходимо сделать в качестве первой помощи при укусе насекомого?",
+    "answers": [
+      {
+        "text": "Наложить жгут выше места укуса",
+        "correct": false
+      },
+      {
+        "text": "Обработать место укуса спиртом и наложить повязку",
+        "correct": false
+      },
+      {
+        "text": "Удалить жало, приложить холод к месту укуса",
+        "correct": true
+      },
+      {
+        "text": "Сразу дать обезболивающее средство",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 187,
+    "ticket": 10,
+    "question": "Можно ли отказать в заключении трудового договора работнику, приглашенному в порядке перевода?",
+    "answers": [
+      {
+        "text": "Можно в течение 3 дней после увольнения",
+        "correct": false
+      },
+      {
+        "text": "Можно при наличии вакантных мест",
+        "correct": false
+      },
+      {
+        "text": "Нельзя в течение 1 месяца со дня увольнения с прежнего места работы",
+        "correct": true
+      },
+      {
+        "text": "Можно только с согласия профсоюза",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 188,
+    "ticket": 10,
+    "question": "Требуется ли выдача удостоверения о проверке знаний по 1 группе электробезопасности?",
+    "answers": [
+      {
+        "text": "Требуется всем работникам",
+        "correct": false
+      },
+      {
+        "text": "Требуется только руководителям",
+        "correct": false
+      },
+      {
+        "text": "Не требуется",
+        "correct": true
+      },
+      {
+        "text": "Требуется по решению работодателя",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 189,
+    "ticket": 10,
+    "question": "Какой федеральный закон определяет основы обеспечения пожарной безопасности?",
+    "answers": [
+      {
+        "text": "Федеральный закон № 116-ФЗ",
+        "correct": false
+      },
+      {
+        "text": "Федеральный закон № 426-ФЗ",
+        "correct": false
+      },
+      {
+        "text": "69-ФЗ «О пожарной безопасности»",
+        "correct": true
+      },
+      {
+        "text": "Трудовой кодекс Российской Федерации",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 190,
+    "ticket": 10,
+    "question": "Что не входит в задачи проверки приобретения компетентности персонала?",
+    "answers": [
+      {
+        "text": "Проверка соответствия установленным требованиям",
+        "correct": false
+      },
+      {
+        "text": "Проверка наличия необходимых знаний и навыков",
+        "correct": false
+      },
+      {
+        "text": "Проверка результатов подготовки персонала",
+        "correct": false
+      },
+      {
+        "text": "Проведение дополнительного общего тестирования персонала",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 191,
+    "ticket": 10,
+    "question": "Что необходимо сделать при носовом кровотечении?",
+    "answers": [
+      {
+        "text": "Запрокинуть голову назад",
+        "correct": false
+      },
+      {
+        "text": "Лечь на спину",
+        "correct": false
+      },
+      {
+        "text": "Наклонить голову вперед, сжать крылья носа",
+        "correct": true
+      },
+      {
+        "text": "Промыть нос холодной водой",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 192,
+    "ticket": 10,
+    "question": "Какой вид инструктажа проводится с работником, направляемым для выполнения разовых работ?",
+    "answers": [
+      {
+        "text": "Вводный",
+        "correct": false
+      },
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": true
+      },
+      {
+        "text": "Внеплановый",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 193,
+    "ticket": 10,
+    "question": "Что необходимо сделать при отсутствии у пострадавшего сознания и дыхания после воздействия электрического тока?",
+    "answers": [
+      {
+        "text": "Наложить повязку",
+        "correct": false
+      },
+      {
+        "text": "Переместить пострадавшего в теплое помещение",
+        "correct": false
+      },
+      {
+        "text": "Провести сердечно-легочную реанимацию",
+        "correct": true
+      },
+      {
+        "text": "Дать обезболивающее средство",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 194,
+    "ticket": 10,
+    "question": "На какие категории делятся СИЗ в зависимости от характера их применения?",
+    "answers": [
+      {
+        "text": "На основные и дополнительные",
+        "correct": false
+      },
+      {
+        "text": "На постоянные и временные",
+        "correct": false
+      },
+      {
+        "text": "На средства индивидуальной и коллективной защиты",
+        "correct": true
+      },
+      {
+        "text": "На защитные и сигнальные",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 195,
+    "ticket": 10,
+    "question": "Ожоги подразделяются на...?",
+    "answers": [
+      {
+        "text": "Две степени",
+        "correct": false
+      },
+      {
+        "text": "Три степени",
+        "correct": false
+      },
+      {
+        "text": "Четыре степени",
+        "correct": true
+      },
+      {
+        "text": "Пять степеней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 196,
+    "ticket": 10,
+    "question": "Где должна производиться сушка одежды и обуви?",
+    "answers": [
+      {
+        "text": "В производственных помещениях",
+        "correct": false
+      },
+      {
+        "text": "На отопительных приборах",
+        "correct": false
+      },
+      {
+        "text": "В специальных шкафах заводского исполнения или приспособленных для этих целей помещениях",
+        "correct": true
+      },
+      {
+        "text": "На открытом воздухе вблизи источников тепла",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 197,
+    "ticket": 10,
+    "question": "В каких случаях проводится внеплановый противопожарный инструктаж?",
+    "answers": [
+      {
+        "text": "При введении в действие новых нормативных документов по пожарной безопасности",
+        "correct": true
+      },
+      {
+        "text": "При изменении технологического процесса, модернизации оборудования и материалов",
+        "correct": true
+      },
+      {
+        "text": "При нарушении требований пожарной безопасности, которые могли привести или привели к пожару",
+        "correct": true
+      },
+      {
+        "text": "По решению руководителей организаций и граждан",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 198,
+    "ticket": 10,
+    "question": "Какие формы обучения не предусматривает обучение мерам пожарной безопасности?",
+    "answers": [
+      {
+        "text": "Противопожарный инструктаж",
+        "correct": false
+      },
+      {
+        "text": "Практические тренировки по эвакуации",
+        "correct": false
+      },
+      {
+        "text": "Обучение пожарно-техническому минимуму со сдачей зачета",
+        "correct": true
+      },
+      {
+        "text": "Изучение инструкций по пожарной безопасности",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 199,
+    "ticket": 10,
+    "question": "Укажите виды инструктажа по пожарной безопасности.",
+    "answers": [
+      {
+        "text": "Вводный",
+        "correct": true
+      },
+      {
+        "text": "Первичный на рабочем месте",
+        "correct": true
+      },
+      {
+        "text": "Повторный",
+        "correct": true
+      },
+      {
+        "text": "Внеплановый и целевой",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 200,
+    "ticket": 10,
+    "question": "С какой периодичностью проводится повторный противопожарный инструктаж?",
+    "answers": [
+      {
+        "text": "Не реже 1 раза в месяц",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в квартал",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в год",
+        "correct": true
+      },
+      {
+        "text": "Не реже 1 раза в 5 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 201,
+    "ticket": 11,
+    "question": "С какой периодичностью проводится повторный противопожарный инструктаж на объектах с массовым пребыванием людей?",
+    "answers": [
+      {
+        "text": "Не реже 1 раза в месяц",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в квартал",
+        "correct": false
+      },
+      {
+        "text": "Не реже 1 раза в полугодие",
+        "correct": true
+      },
+      {
+        "text": "Не реже 1 раза в год",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 202,
+    "ticket": 11,
+    "question": "В течение какого времени системы противопожарной защиты должны сохранять работоспособность в условиях пожара?",
+    "answers": [
+      {
+        "text": "До прибытия пожарных подразделений",
+        "correct": false
+      },
+      {
+        "text": "В течение 15 минут",
+        "correct": false
+      },
+      {
+        "text": "До начала эвакуации",
+        "correct": false
+      },
+      {
+        "text": "В течение времени полной эвакуации людей",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 203,
+    "ticket": 11,
+    "question": "В каком случае допускается не проводить реанимационные мероприятия?",
+    "answers": [
+      {
+        "text": "При отсутствии аптечки",
+        "correct": false
+      },
+      {
+        "text": "При отказе окружающих помогать",
+        "correct": false
+      },
+      {
+        "text": "При наличии признаков биологической смерти",
+        "correct": true
+      },
+      {
+        "text": "При отсутствии пульса менее 1 минуты",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 204,
+    "ticket": 11,
+    "question": "В рамках какого мероприятия проводится ознакомление со способами проверки СИЗ?",
+    "answers": [
+      {
+        "text": "В рамках инструктажа по охране труда на рабочем месте",
+        "correct": true
+      },
+      {
+        "text": "Во время медицинского осмотра",
+        "correct": false
+      },
+      {
+        "text": "После окончания стажировки",
+        "correct": false
+      },
+      {
+        "text": "Во время вводного противопожарного инструктажа",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 205,
+    "ticket": 11,
+    "question": "Что относится к стратегическим целям охраны труда?",
+    "answers": [
+      {
+        "text": "Сокращение профессиональных заболеваний",
+        "correct": true
+      },
+      {
+        "text": "Увеличение рабочего времени",
+        "correct": false
+      },
+      {
+        "text": "Сокращение инструктажей",
+        "correct": false
+      },
+      {
+        "text": "Снижение затрат на СИЗ",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 206,
+    "ticket": 11,
+    "question": "Что понимается под профессиональным риском?",
+    "answers": [
+      {
+        "text": "Вероятность причинения вреда жизни и здоровью работника",
+        "correct": true
+      },
+      {
+        "text": "Несчастный случай на производстве",
+        "correct": false
+      },
+      {
+        "text": "Опасный производственный фактор",
+        "correct": false
+      },
+      {
+        "text": "Работа во вредных условиях труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 207,
+    "ticket": 11,
+    "question": "Где действуют локальные нормативные акты работодателя?",
+    "answers": [
+      {
+        "text": "Только на территории работодателя",
+        "correct": false
+      },
+      {
+        "text": "Только в филиалах организации",
+        "correct": false
+      },
+      {
+        "text": "На любой территории, где работник выполняет трудовые обязанности",
+        "correct": true
+      },
+      {
+        "text": "Только по месту, указанному в договоре",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 208,
+    "ticket": 11,
+    "question": "За сколько работодатель обязан уведомить работника об изменении условий труда?",
+    "answers": [
+      {
+        "text": "За 14 дней",
+        "correct": false
+      },
+      {
+        "text": "За 1 месяц",
+        "correct": false
+      },
+      {
+        "text": "За 2 месяца",
+        "correct": true
+      },
+      {
+        "text": "За 6 месяцев",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 209,
+    "ticket": 11,
+    "question": "Что является основной целью охраны труда?",
+    "answers": [
+      {
+        "text": "Создание безопасных условий труда",
+        "correct": true
+      },
+      {
+        "text": "Повышение прибыли организации",
+        "correct": false
+      },
+      {
+        "text": "Сокращение численности работников",
+        "correct": false
+      },
+      {
+        "text": "Увеличение продолжительности смены",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 210,
+    "ticket": 11,
+    "question": "В каком случае работодатель обязан отстранить работника от работы?",
+    "answers": [
+      {
+        "text": "При непрохождении медосмотра",
+        "correct": true
+      },
+      {
+        "text": "При появлении в состоянии опьянения",
+        "correct": true
+      },
+      {
+        "text": "При непрохождении обучения по охране труда",
+        "correct": true
+      },
+      {
+        "text": "При отказе выйти в выходной день",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 211,
+    "ticket": 11,
+    "question": "Что является основой культуры безопасности труда?",
+    "answers": [
+      {
+        "text": "Личная ответственность работников",
+        "correct": true
+      },
+      {
+        "text": "Желание обеспечить безопасность труда",
+        "correct": true
+      },
+      {
+        "text": "Отказ от инструктажей",
+        "correct": false
+      },
+      {
+        "text": "Снижение затрат на охрану труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 212,
+    "ticket": 11,
+    "question": "Кто устанавливает перечень профессий для стажировки?",
+    "answers": [
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Комиссия по проверке знаний",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": true
+      },
+      {
+        "text": "Государственный инспектор труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 213,
+    "ticket": 11,
+    "question": "К каким факторам относятся параметры микроклимата?",
+    "answers": [
+      {
+        "text": "К биологическим",
+        "correct": false
+      },
+      {
+        "text": "К физическим",
+        "correct": true
+      },
+      {
+        "text": "К химическим",
+        "correct": false
+      },
+      {
+        "text": "К психофизиологическим",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 214,
+    "ticket": 11,
+    "question": "Куда работник может обратиться при несогласии с расследованием несчастного случая?",
+    "answers": [
+      {
+        "text": "В профсоюз",
+        "correct": false
+      },
+      {
+        "text": "В прокуратуру",
+        "correct": false
+      },
+      {
+        "text": "В инспекцию труда",
+        "correct": true
+      },
+      {
+        "text": "В отдел кадров",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 215,
+    "ticket": 11,
+    "question": "Что является основанием для выдачи СИЗ работнику?",
+    "answers": [
+      {
+        "text": "Заявление работника",
+        "correct": false
+      },
+      {
+        "text": "Приказ руководителя",
+        "correct": false
+      },
+      {
+        "text": "Единые типовые нормы выдачи СИЗ",
+        "correct": true
+      },
+      {
+        "text": "Решение комиссии по охране труда",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 216,
+    "ticket": 11,
+    "question": "Сколько времени хранятся документы по расследованию происшествий категории «А»?",
+    "answers": [
+      {
+        "text": "10 лет",
+        "correct": false
+      },
+      {
+        "text": "25 лет",
+        "correct": false
+      },
+      {
+        "text": "45 лет",
+        "correct": true
+      },
+      {
+        "text": "75 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 217,
+    "ticket": 11,
+    "question": "Сколько времени хранятся документы по расследованию происшествий категории «Ж»?",
+    "answers": [
+      {
+        "text": "Не менее 3 лет",
+        "correct": false
+      },
+      {
+        "text": "Не менее 5 лет",
+        "correct": false
+      },
+      {
+        "text": "Не менее 10 лет",
+        "correct": true
+      },
+      {
+        "text": "Не менее 45 лет",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 218,
+    "ticket": 11,
+    "question": "Что обязан сделать работник при происшествии?",
+    "answers": [
+      {
+        "text": "Оказать первую помощь пострадавшему",
+        "correct": true
+      },
+      {
+        "text": "Сообщить линейному руководителю",
+        "correct": true
+      },
+      {
+        "text": "Принять меры по вызову аварийных служб",
+        "correct": true
+      },
+      {
+        "text": "Самостоятельно покинуть место происшествия без уведомления",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 219,
+    "ticket": 11,
+    "question": "Нужно ли сообщать руководителю о травме, полученной вне рабочего времени?",
+    "answers": [
+      {
+        "text": "Нет, если травма не связана с работой",
+        "correct": false
+      },
+      {
+        "text": "Только при тяжелой травме",
+        "correct": false
+      },
+      {
+        "text": "Да, незамедлительно",
+        "correct": true
+      },
+      {
+        "text": "Только при оформлении больничного",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 220,
+    "ticket": 11,
+    "question": "Какие меры воздействия применяются за нарушение ключевых правил безопасности?",
+    "answers": [
+      {
+        "text": "Замечание",
+        "correct": true
+      },
+      {
+        "text": "Выговор",
+        "correct": true
+      },
+      {
+        "text": "Увольнение",
+        "correct": true
+      },
+      {
+        "text": "Материальное воздействие",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 221,
+    "ticket": 12,
+    "question": "Что относится к измеримым целям охраны труда?",
+    "answers": [
+      {
+        "text": "Снижение уровня травматизма",
+        "correct": true
+      },
+      {
+        "text": "Увеличение рабочего времени",
+        "correct": false
+      },
+      {
+        "text": "Отмена инструктажей",
+        "correct": false
+      },
+      {
+        "text": "Сокращение выдачи СИЗ",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 222,
+    "ticket": 12,
+    "question": "На сколько процентов может быть уменьшен размер ежемесячных страховых выплат?",
+    "answers": [
+      {
+        "text": "Не более чем на 10%",
+        "correct": false
+      },
+      {
+        "text": "Не более чем на 25%",
+        "correct": true
+      },
+      {
+        "text": "Не более чем на 50%",
+        "correct": false
+      },
+      {
+        "text": "Не более чем на 75%",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 223,
+    "ticket": 12,
+    "question": "Что является целью трудового законодательства РФ?",
+    "answers": [
+      {
+        "text": "Создание благоприятных условий труда",
+        "correct": true
+      },
+      {
+        "text": "Снижение затрат работодателя",
+        "correct": false
+      },
+      {
+        "text": "Увеличение рабочего времени",
+        "correct": false
+      },
+      {
+        "text": "Сокращение социальных гарантий",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 224,
+    "ticket": 12,
+    "question": "Что понимается под условиями труда?",
+    "answers": [
+      {
+        "text": "Совокупность факторов производственной среды и трудового процесса",
+        "correct": true
+      },
+      {
+        "text": "Только режим рабочего времени",
+        "correct": false
+      },
+      {
+        "text": "Только размер заработной платы",
+        "correct": false
+      },
+      {
+        "text": "Только санитарное состояние рабочего места",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 225,
+    "ticket": 12,
+    "question": "За счет каких средств обеспечивается выдача и хранение СИЗ?",
+    "answers": [
+      {
+        "text": "За счет средств работников",
+        "correct": false
+      },
+      {
+        "text": "За счет профсоюза",
+        "correct": false
+      },
+      {
+        "text": "За счет средств работодателя",
+        "correct": true
+      },
+      {
+        "text": "За счет страховой компании",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 226,
+    "ticket": 12,
+    "question": "Как часто проводится специальная оценка условий труда?",
+    "answers": [
+      {
+        "text": "Раз в год",
+        "correct": false
+      },
+      {
+        "text": "Не реже одного раза в 5 лет",
+        "correct": true
+      },
+      {
+        "text": "Раз в 10 лет",
+        "correct": false
+      },
+      {
+        "text": "Только при несчастном случае",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 227,
+    "ticket": 12,
+    "question": "Какой инструктаж проводится при приеме на работу?",
+    "answers": [
+      {
+        "text": "Повторный",
+        "correct": false
+      },
+      {
+        "text": "Целевой",
+        "correct": false
+      },
+      {
+        "text": "Вводный",
+        "correct": true
+      },
+      {
+        "text": "Внеплановый",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 228,
+    "ticket": 12,
+    "question": "Что обязан сделать работник при угрозе жизни и здоровью?",
+    "answers": [
+      {
+        "text": "Продолжить работу",
+        "correct": false
+      },
+      {
+        "text": "Сообщить коллеге",
+        "correct": false
+      },
+      {
+        "text": "Прекратить работу и сообщить руководителю",
+        "correct": true
+      },
+      {
+        "text": "Покинуть объект без уведомления",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 229,
+    "ticket": 12,
+    "question": "Какая нормальная продолжительность рабочего времени в неделю?",
+    "answers": [
+      {
+        "text": "36 часов",
+        "correct": false
+      },
+      {
+        "text": "38 часов",
+        "correct": false
+      },
+      {
+        "text": "40 часов",
+        "correct": true
+      },
+      {
+        "text": "42 часа",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 230,
+    "ticket": 12,
+    "question": "Какое средство относится к первичным средствам пожаротушения?",
+    "answers": [
+      {
+        "text": "Пожарный рукав",
+        "correct": false
+      },
+      {
+        "text": "Огнетушитель",
+        "correct": true
+      },
+      {
+        "text": "Лестница",
+        "correct": false
+      },
+      {
+        "text": "Система вентиляции",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 231,
+    "ticket": 12,
+    "question": "Какова продолжительность ежегодного отпуска?",
+    "answers": [
+      {
+        "text": "14 календарных дней",
+        "correct": false
+      },
+      {
+        "text": "21 календарный день",
+        "correct": false
+      },
+      {
+        "text": "28 календарных дней",
+        "correct": true
+      },
+      {
+        "text": "35 календарных дней",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 232,
+    "ticket": 12,
+    "question": "Что необходимо сделать при поражении электрическим током?",
+    "answers": [
+      {
+        "text": "Дать пострадавшему воду",
+        "correct": false
+      },
+      {
+        "text": "Прекратить действие тока",
+        "correct": true
+      },
+      {
+        "text": "Наложить повязку",
+        "correct": false
+      },
+      {
+        "text": "Оставить пострадавшего в покое",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 233,
+    "ticket": 12,
+    "question": "Что относится к обязанностям работника по охране труда?",
+    "answers": [
+      {
+        "text": "Использовать СИЗ",
+        "correct": true
+      },
+      {
+        "text": "Проходить медосмотры",
+        "correct": true
+      },
+      {
+        "text": "Соблюдать требования охраны труда",
+        "correct": true
+      },
+      {
+        "text": "Самостоятельно изменять инструкции",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 234,
+    "ticket": 12,
+    "question": "Кто организует обучение по охране труда?",
+    "answers": [
+      {
+        "text": "Профсоюз",
+        "correct": false
+      },
+      {
+        "text": "Работодатель",
+        "correct": true
+      },
+      {
+        "text": "Комиссия по расследованию",
+        "correct": false
+      },
+      {
+        "text": "Работник",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 235,
+    "ticket": 12,
+    "question": "Какое воздействие оказывает электрический ток на организм человека?",
+    "answers": [
+      {
+        "text": "Биологическое",
+        "correct": true
+      },
+      {
+        "text": "Термическое",
+        "correct": true
+      },
+      {
+        "text": "Электролитическое",
+        "correct": true
+      },
+      {
+        "text": "Только механическое",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 236,
+    "ticket": 12,
+    "question": "Что запрещено при оказании помощи при ожогах?",
+    "answers": [
+      {
+        "text": "Охлаждать место ожога",
+        "correct": false
+      },
+      {
+        "text": "Накладывать стерильную повязку",
+        "correct": false
+      },
+      {
+        "text": "Вскрывать ожоговые пузыри",
+        "correct": true
+      },
+      {
+        "text": "Вызывать скорую помощь",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 237,
+    "ticket": 12,
+    "question": "Какой документ оформляется при несчастном случае на производстве?",
+    "answers": [
+      {
+        "text": "Протокол",
+        "correct": false
+      },
+      {
+        "text": "Акт формы Н-1",
+        "correct": true
+      },
+      {
+        "text": "Служебная записка",
+        "correct": false
+      },
+      {
+        "text": "Наряд-допуск",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 238,
+    "ticket": 12,
+    "question": "Когда проводится внеплановый инструктаж?",
+    "answers": [
+      {
+        "text": "После аварии",
+        "correct": true
+      },
+      {
+        "text": "При изменении оборудования",
+        "correct": true
+      },
+      {
+        "text": "При изменении нормативных требований",
+        "correct": true
+      },
+      {
+        "text": "Только раз в год",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 239,
+    "ticket": 12,
+    "question": "Что относится к опасным производственным факторам?",
+    "answers": [
+      {
+        "text": "Фактор, способный привести к травме",
+        "correct": true
+      },
+      {
+        "text": "Повышенная температура воздуха",
+        "correct": false
+      },
+      {
+        "text": "Низкая зарплата",
+        "correct": false
+      },
+      {
+        "text": "Ненормированный отпуск",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 240,
+    "ticket": 12,
+    "question": "Какое положение придают пострадавшему без сознания?",
+    "answers": [
+      {
+        "text": "Сидячее",
+        "correct": false
+      },
+      {
+        "text": "На животе",
+        "correct": false
+      },
+      {
+        "text": "Устойчивое боковое положение",
+        "correct": true
+      },
+      {
+        "text": "Стоя с опорой",
+        "correct": false
+      }
+    ]
+  }
+];
+
+    const STORAGE_KEY = 'safety-trainer-progress';
+
+    // === Состояние приложения ===
+    const state = {
+      screen: 'home',
+      mode: null,           // 'training' | 'ticket' | 'random'
+      questionIds: [],      // порядок вопросов в текущей сессии
+      currentIndex: 0,
+      correctCount: 0,
+      errorCount: 0,
+      checked: false,
+      selected: new Set(),
+      currentTicket: null,
+      viewAnswersVisible: true,
+      studyFilterTicket: '',
+      studySearch: '',
+      answerHistory: {},
+      lastSession: null
+    };
+
+    // === Утилиты ===
+    function $(id) { return document.getElementById(id); }
+
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const el = $('screen-' + name);
+      if (el) el.classList.add('active');
+      state.screen = name;
+      saveProgress();
+    }
+
+    function getQuestionById(id) {
+      return QUESTIONS.find(q => q.id === id);
+    }
+
+    function getQuestionsByTicket(ticket) {
+      return QUESTIONS.filter(q => q.ticket === ticket);
+    }
+
+    function getTicketCount() {
+      return Math.max(...QUESTIONS.map(q => q.ticket));
+    }
+
+    function getCorrectIndices(question) {
+      return question.answers
+        .map((a, i) => a.correct ? i : -1)
+        .filter(i => i >= 0);
+    }
+
+    function getCorrectCount(question) {
+      return question.answers.filter(a => a.correct).length;
+    }
+
+  function setsEqual(a, b) {
+      if (a.size !== b.size) return false;
+      for (const x of a) if (!b.has(x)) return false;
+      return true;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const LETTERS = ['а', 'б', 'в', 'г'];
+
+    // === localStorage ===
+    function saveProgress() {
+      try {
+        const data = {
+          screen: state.screen,
+          mode: state.mode,
+          questionIds: state.questionIds,
+          currentIndex: state.currentIndex,
+          correctCount: state.correctCount,
+          errorCount: state.errorCount,
+          currentTicket: state.currentTicket,
+          viewAnswersVisible: state.viewAnswersVisible,
+          answerHistory: state.answerHistory
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data.questionIds || !data.questionIds.length) return false;
+        Object.assign(state, {
+          mode: data.mode,
+          questionIds: data.questionIds,
+          currentIndex: data.currentIndex || 0,
+          correctCount: data.correctCount || 0,
+          errorCount: data.errorCount || 0,
+          currentTicket: data.currentTicket,
+          viewAnswersVisible: data.viewAnswersVisible !== false,
+          answerHistory: data.answerHistory || {}
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function clearSession() {
+      state.questionIds = [];
+      state.currentIndex = 0;
+      state.correctCount = 0;
+      state.errorCount = 0;
+      state.checked = false;
+      state.selected = new Set();
+      state.mode = null;
+      state.currentTicket = null;
+      state.answerHistory = {};
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    }
+
+    function resetQuizCounters() {
+      state.correctCount = 0;
+      state.errorCount = 0;
+      state.answerHistory = {};
+      state.currentIndex = 0;
+    }
+
+    // === Рендер тренировки ===
+    function startTraining(ids, keepMode) {
+      if (!keepMode) state.mode = state.mode || 'training';
+      state.questionIds = ids || QUESTIONS.map(q => q.id);
+      resetQuizCounters();
+      state.checked = false;
+      state.selected = new Set();
+      showScreen('quiz');
+      renderQuizQuestion();
+    }
+
+    function startTicket(ticket, randomize) {
+      state.mode = 'ticket';
+      state.currentTicket = ticket;
+      let ids = getQuestionsByTicket(ticket).map(q => q.id);
+      if (randomize) ids = shuffle(ids);
+      startTraining(ids);
+    }
+
+    function renderQuizQuestion() {
+      const id = state.questionIds[state.currentIndex];
+      const q = getQuestionById(id);
+      if (!q) return finishQuiz();
+
+      const hist = state.answerHistory[state.currentIndex];
+      state.checked = !!(hist && hist.checked);
+      state.selected = new Set(hist && hist.selected ? hist.selected : []);
+
+      const total = state.questionIds.length;
+      const num = state.currentIndex + 1;
+      $('quiz-progress').innerHTML =
+        `Вопрос <strong>${num}</strong> из <strong>${total}</strong> · ` +
+        `Верно: <strong>${state.correctCount}</strong> · ` +
+        `Ошибок: <strong>${state.errorCount}</strong>`;
+
+      $('quiz-question').textContent = q.question;
+      const list = $('quiz-answers');
+      list.innerHTML = '';
+
+      q.answers.forEach((ans, i) => {
+        const li = document.createElement('li');
+        li.className = 'answer-item';
+        li.dataset.index = i;
+        li.innerHTML =
+          `<span class="answer-label">${LETTERS[i]})</span>` +
+          `<span class="answer-checkbox"></span>` +
+          `<span class="answer-text">${escapeHtml(ans.text)}</span>`;
+        if (state.selected.has(i)) li.classList.add('selected');
+        if (state.checked) {
+          li.classList.add('locked');
+          const selected = state.selected.has(i);
+          if (ans.correct && selected) li.classList.add('correct');
+          else if (!ans.correct && selected) li.classList.add('wrong');
+          else if (ans.correct && !selected) li.classList.add('missed');
+        } else {
+          li.addEventListener('click', () => toggleAnswer(i, li));
+        }
+        list.appendChild(li);
+      });
+
+      const backBtn = $('btn-back-quiz');
+      backBtn.style.display = state.currentIndex > 0 ? 'block' : 'none';
+
+      if (state.checked) {
+        showCheckedFeedback(q, hist && hist.wasCorrect);
+      } else {
+        $('quiz-feedback').style.display = 'none';
+        $('btn-check').style.display = 'block';
+        $('btn-check').disabled = state.selected.size === 0;
+        $('quiz-nav').style.display = 'none';
+      }
+    }
+
+    function showCheckedFeedback(q, wasCorrect) {
+      const correctTotal = getCorrectCount(q);
+      const fb = $('quiz-feedback');
+      fb.style.display = 'block';
+      fb.className = 'feedback ' + (wasCorrect ? 'success' : 'error');
+      fb.textContent = wasCorrect
+        ? `Верно! Правильных ответов: ${correctTotal}`
+        : `Неверно. Правильных ответов: ${correctTotal}`;
+      $('btn-check').style.display = 'none';
+      $('quiz-nav').style.display = 'block';
+      const isLast = state.currentIndex >= state.questionIds.length - 1;
+      $('btn-next').textContent = isLast ? 'К результатам' : 'Следующий вопрос';
+      $('btn-prev').disabled = state.currentIndex === 0;
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function toggleAnswer(index, el) {
+      if (state.checked) return;
+      if (state.selected.has(index)) {
+        state.selected.delete(index);
+        el.classList.remove('selected');
+      } else {
+        state.selected.add(index);
+        el.classList.add('selected');
+      }
+      $('btn-check').disabled = state.selected.size === 0;
+    }
+
+    function checkAnswer() {
+      if (state.checked || state.selected.size === 0) return;
+
+      const id = state.questionIds[state.currentIndex];
+      const q = getQuestionById(id);
+      const correctSet = new Set(getCorrectIndices(q));
+      const isFullyCorrect = setsEqual(state.selected, correctSet);
+
+      const prev = state.answerHistory[state.currentIndex];
+      if (!prev || !prev.checked) {
+        if (isFullyCorrect) state.correctCount++;
+        else state.errorCount++;
+      }
+
+      state.checked = true;
+      state.answerHistory[state.currentIndex] = {
+        selected: [...state.selected],
+        checked: true,
+        wasCorrect: isFullyCorrect
+      };
+
+      renderQuizQuestion();
+      saveProgress();
+    }
+
+    function nextQuestion() {
+      if (state.currentIndex < state.questionIds.length - 1) {
+        state.currentIndex++;
+        renderQuizQuestion();
+        saveProgress();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function goPrevQuestion() {
+      if (state.currentIndex > 0) {
+        state.currentIndex--;
+        renderQuizQuestion();
+        saveProgress();
+      }
+    }
+
+    function finishQuiz() {
+      state.lastSession = {
+        mode: state.mode,
+        questionIds: [...state.questionIds],
+        currentTicket: state.currentTicket
+      };
+      showScreen('results');
+      const total = state.questionIds.length;
+      const correct = state.correctCount;
+      const errors = state.errorCount;
+      const pct = total ? Math.round((correct / total) * 100) : 0;
+
+      $('results-stats').innerHTML = `
+        <div class="stat-box"><div class="stat-value">${total}</div><div class="stat-label">Всего вопросов</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:var(--success)">${correct}</div><div class="stat-label">Правильных</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:var(--error)">${errors}</div><div class="stat-label">Ошибок</div></div>
+        <div class="stat-box"><div class="stat-value">${pct}%</div><div class="stat-label">Результат</div></div>
+      `;
+      clearSession();
+    }
+
+    // === Билеты ===
+    function renderTicketsList() {
+      const container = $('tickets-list');
+      container.innerHTML = '';
+      const count = getTicketCount();
+      for (let t = 1; t <= count; t++) {
+        const from = (t - 1) * 20 + 1;
+        const to = t * 20;
+        const card = document.createElement('div');
+        card.className = 'card ticket-card';
+        card.innerHTML = `
+          <div>
+            <strong>Билет ${t}</strong><br>
+            <span style="font-size:0.85rem;color:var(--text-muted)">Вопросы ${from}–${to}</span>
+          </div>
+          <button type="button" class="btn btn-primary" data-ticket="${t}">Открыть билет</button>
+        `;
+        card.querySelector('button').addEventListener('click', () => openTicketMenu(t));
+        container.appendChild(card);
+      }
+      showScreen('tickets');
+    }
+
+    function openTicketMenu(ticket) {
+      state.currentTicket = ticket;
+      const from = (ticket - 1) * 20 + 1;
+      const to = ticket * 20;
+      $('ticket-menu-title').textContent = `Билет ${ticket} (вопросы ${from}–${to})`;
+      showScreen('ticket-menu');
+    }
+
+    function renderTicketView() {
+      const ticket = state.currentTicket;
+      const questions = getQuestionsByTicket(ticket);
+      $('view-ticket-title').textContent = `Просмотр билета ${ticket}`;
+      const container = $('ticket-view-content');
+      container.classList.toggle('hidden-answers', !state.viewAnswersVisible);
+
+      container.innerHTML = questions.map(q => {
+        const correctN = getCorrectCount(q);
+        const answersHtml = q.answers.map((a, i) => {
+          const cls = state.viewAnswersVisible && a.correct ? 'correct-show' : '';
+          return `<li class="${cls}">${LETTERS[i]}) ${escapeHtml(a.text)}</li>`;
+        }).join('');
+        return `
+          <div class="view-question">
+            <div class="view-question-num">Вопрос ${q.id} · Правильных ответов: ${correctN}</div>
+            <div class="question-text">${escapeHtml(q.question)}</div>
+            <ul class="view-answers">${answersHtml}</ul>
+          </div>
+        `;
+      }).join('');
+
+      $('btn-toggle-answers').textContent = state.viewAnswersVisible
+        ? 'Скрыть правильные ответы'
+        : 'Показать правильные ответы';
+
+      showScreen('ticket-view');
+    }
+
+    // === Режим изучения ===
+    function initStudyFilter() {
+      const sel = $('study-ticket-filter');
+      const count = getTicketCount();
+      sel.innerHTML = '<option value="">Все билеты</option>';
+      for (let t = 1; t <= count; t++) {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = `Билет ${t}`;
+        sel.appendChild(opt);
+      }
+    }
+
+    function renderStudyList() {
+      const search = ($('study-search').value || '').toLowerCase().trim();
+      const ticketFilter = $('study-ticket-filter').value;
+
+      let list = QUESTIONS;
+      if (ticketFilter) list = list.filter(q => q.ticket === Number(ticketFilter));
+      if (search) {
+        list = list.filter(q =>
+          q.question.toLowerCase().includes(search) ||
+          q.answers.some(a => a.text.toLowerCase().includes(search))
+        );
+      }
+
+      const ul = $('study-list');
+      if (!list.length) {
+        ul.innerHTML = '<li class="study-item">Ничего не найдено</li>';
+        return;
+      }
+
+      ul.innerHTML = list.map(q => `
+        <li class="study-item" data-id="${q.id}">
+          <div class="study-item-num">Вопрос ${q.id} · Билет ${q.ticket}</div>
+          <div class="study-item-text">${escapeHtml(q.question)}</div>
+        </li>
+      `).join('');
+
+      ul.querySelectorAll('.study-item').forEach(li => {
+        li.addEventListener('click', () => openStudyDetail(Number(li.dataset.id)));
+      });
+    }
+
+    function openStudyDetail(id) {
+      const q = getQuestionById(id);
+      if (!q) return;
+      const correctN = getCorrectCount(q);
+      const answersHtml = q.answers.map((a, i) => {
+        const cls = a.correct ? 'correct-show' : '';
+        return `<li class="${cls}">${LETTERS[i]}) ${escapeHtml(a.text)}</li>`;
+      }).join('');
+
+      $('study-detail-content').innerHTML = `
+        <span class="meta-tag">Билет ${q.ticket} · Вопрос ${q.id}</span>
+        <p class="meta-tag" style="background:#d1fae5;color:#065f46">Правильных ответов: ${correctN}</p>
+        <div class="question-text">${escapeHtml(q.question)}</div>
+        <ul class="view-answers">${answersHtml}</ul>
+      `;
+      showScreen('study-detail');
+    }
+
+    // === Обработчики ===
+    function bindEvents() {
+      document.querySelectorAll('[data-action]').forEach(el => {
+        el.addEventListener('click', () => {
+          const action = el.dataset.action;
+          switch (action) {
+            case 'start-training':
+              clearSession();
+              state.mode = 'training';
+              startTraining(QUESTIONS.map(q => q.id));
+              break;
+            case 'random-ticket':
+              clearSession();
+              state.mode = 'random';
+              const t = Math.floor(Math.random() * getTicketCount()) + 1;
+              startTicket(t, true);
+              break;
+            case 'all-tickets':
+              renderTicketsList();
+              break;
+            case 'study-mode':
+              initStudyFilter();
+              renderStudyList();
+              showScreen('study');
+              break;
+            case 'go-home':
+              showScreen('home');
+              updateResumeBanner();
+              break;
+            case 'ticket-test':
+              clearSession();
+              startTicket(state.currentTicket, false);
+              break;
+            case 'ticket-view':
+              state.viewAnswersVisible = true;
+              renderTicketView();
+              break;
+            case 'all-tickets':
+              renderTicketsList();
+              break;
+            case 'study-back':
+              showScreen('study');
+              renderStudyList();
+              break;
+            case 'ticket-menu-back':
+              openTicketMenu(state.currentTicket);
+              break;
+            case 'resume-session':
+              if (loadProgress()) {
+                showScreen('quiz');
+                renderQuizQuestion();
+              }
+              break;
+            case 'retry': {
+              const ls = state.lastSession;
+              if (ls && ls.currentTicket) {
+                state.mode = ls.mode;
+                startTicket(ls.currentTicket, false);
+              } else if (ls && ls.questionIds) {
+                state.mode = ls.mode || 'training';
+                startTraining(ls.questionIds);
+              } else {
+                clearSession();
+                state.mode = 'training';
+                startTraining(QUESTIONS.map(q => q.id));
+              }
+              break;
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-ticket]').forEach(el => {
+        el.addEventListener('click', () => openTicketMenu(Number(el.dataset.ticket)));
+      });
+
+      $('btn-check').addEventListener('click', checkAnswer);
+      $('btn-next').addEventListener('click', nextQuestion);
+      $('btn-prev').addEventListener('click', goPrevQuestion);
+      $('btn-back-quiz').addEventListener('click', goPrevQuestion);
+      $('btn-finish').addEventListener('click', finishQuiz);
+
+      $('btn-toggle-answers').addEventListener('click', () => {
+        state.viewAnswersVisible = !state.viewAnswersVisible;
+        renderTicketView();
+      });
+
+      $('study-search').addEventListener('input', renderStudyList);
+      $('study-ticket-filter').addEventListener('change', renderStudyList);
+    }
+
+    // === Инициализация ===
+    function hasSavedSession() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        return data.questionIds && data.questionIds.length &&
+          (data.currentIndex || 0) < data.questionIds.length;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function updateResumeBanner() {
+      const banner = $('resume-banner');
+      if (banner) banner.style.display = hasSavedSession() ? 'block' : 'none';
+    }
+
+    function init() {
+      bindEvents();
+      initStudyFilter();
+      updateResumeBanner();
+    }
+
+    init();
+  </script>
+</body>
+</html>
