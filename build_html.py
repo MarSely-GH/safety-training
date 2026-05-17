@@ -436,17 +436,6 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     .voice-controls .btn {
       margin-bottom: 8px;
     }
-    .voice-keyboard-hint {
-      display: block;
-      font-size: 0.9rem;
-      color: var(--text);
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 8px;
-      padding: 10px 12px;
-      line-height: 1.45;
-      margin: 0 0 8px;
-    }
     .quick-search-actions {
       display: flex;
       flex-direction: column;
@@ -470,16 +459,6 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     }
     .voice-status.listening { color: var(--success); }
     .voice-status.error { color: var(--error); }
-    .voice-unsupported {
-      font-size: 0.9rem;
-      color: #92400e;
-      padding: 10px 12px;
-      background: #fef3c7;
-      border: 1px solid #fcd34d;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      line-height: 1.45;
-    }
     #btn-voice-input:disabled {
       opacity: 0.65;
       cursor: not-allowed;
@@ -536,21 +515,11 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       padding: 0 2px;
       border-radius: 2px;
     }
-    .quick-answers-hidden .view-answers li.correct-show {
-      background: transparent;
-      font-weight: normal;
-      color: inherit;
-    }
-
     @media (max-width: 599px) {
       .quick-search-input {
         min-height: 96px;
         font-size: 16px;
         padding: 14px;
-      }
-      .voice-keyboard-hint {
-        font-size: 0.95rem;
-        padding: 12px 14px;
       }
       #btn-quick-find {
         font-size: 1.1rem;
@@ -611,28 +580,18 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
           autocapitalize="sentences"
           spellcheck="true"
           lang="ru"
-          placeholder="Введите вопрос или нажмите микрофон на клавиатуре телефона"
+          placeholder="Введите или надиктуйте вопрос"
         ></textarea>
         <p class="quick-search-hint">Можно ввести вопрос не дословно — поиск найдет наиболее похожие варианты по смыслу и ключевым словам.</p>
         <div class="voice-block">
-        <div id="voice-unsupported" class="voice-unsupported" style="display:none" role="status">
-          Встроенный голосовой ввод сайта не поддерживается этим браузером. Используйте микрофон на клавиатуре телефона.
-        </div>
         <div id="voice-controls" class="voice-controls">
           <button type="button" class="btn btn-secondary" id="btn-voice-input">🎤 Голосовой ввод</button>
-          <p class="voice-keyboard-hint" id="voice-keyboard-hint">
-            На телефоне можно нажать значок микрофона на клавиатуре и надиктовать вопрос.
-          </p>
           <span id="voice-status" class="voice-status" aria-live="polite"></span>
         </div>
         </div>
         <div class="quick-search-actions row-2">
           <button type="button" class="btn btn-primary" id="btn-quick-find">Найти</button>
           <button type="button" class="btn btn-secondary" id="btn-quick-clear">Очистить</button>
-        </div>
-        <div class="quick-search-actions row-2">
-          <button type="button" class="btn btn-secondary" id="btn-quick-show-answers">Показать правильный ответ</button>
-          <button type="button" class="btn btn-secondary" id="btn-quick-hide-answers">Скрыть правильный ответ</button>
         </div>
       </div>
       <div id="quick-search-results"></div>
@@ -737,7 +696,6 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       studySearch: '',
       answerHistory: {},
       lastSession: null,
-      quickSearchRevealAnswers: true,
       quickSearchDebounceTimer: null,
       quickSearchLastQuery: ''
     };
@@ -1309,8 +1267,7 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
 
     function renderQuickSearchAnswers(q, matchedTokens) {
       return q.answers.map((a, i) => {
-        const showCorrect = state.quickSearchRevealAnswers && a.correct;
-        const cls = showCorrect ? 'correct-show' : '';
+        const cls = a.correct ? 'correct-show' : '';
         const text = highlightMatchedWords(a.text, matchedTokens);
         return `<li class="${cls}">${LETTERS[i]}) ${text}</li>`;
       }).join('');
@@ -1319,9 +1276,8 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     function renderQuickSearchQuestionBlock(q, score, matchedTokens, isMain) {
       const correctN = getCorrectCount(q);
       const wrapCls = isMain ? 'quick-result-main' : 'quick-similar-item';
-      const hiddenCls = state.quickSearchRevealAnswers ? '' : ' quick-answers-hidden';
       return `
-        <div class="${wrapCls}${hiddenCls}" data-question-id="${q.id}">
+        <div class="${wrapCls}" data-question-id="${q.id}">
           <div class="quick-result-score">Совпадение: ${score}%</div>
           <div class="quick-result-meta">
             <span class="meta-tag">Вопрос ${q.id}</span>
@@ -1442,19 +1398,14 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
 
     function refreshVoiceInputUI() {
       const btn = $('btn-voice-input');
-      const unsupported = $('voice-unsupported');
       const controls = $('voice-controls');
       if (controls) controls.style.display = 'block';
       if (!hasSpeechRecognition()) {
-        if (unsupported) unsupported.style.display = 'block';
         setupVoiceButtonUnsupported(btn);
-      } else {
-        if (unsupported) unsupported.style.display = 'none';
-        if (btn) {
-          btn.disabled = false;
-          btn.removeAttribute('aria-disabled');
-          btn.title = '';
-        }
+      } else if (btn) {
+        btn.disabled = false;
+        btn.removeAttribute('aria-disabled');
+        btn.title = '';
       }
     }
 
@@ -1473,7 +1424,6 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       if (!btn) return;
       btn.disabled = true;
       btn.setAttribute('aria-disabled', 'true');
-      btn.title = 'Используйте микрофон на клавиатуре телефона';
     }
 
     function initVoiceInput() {
@@ -1554,16 +1504,6 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
 
       $('btn-quick-find').addEventListener('click', runQuickSearch);
       $('btn-quick-clear').addEventListener('click', clearQuickSearch);
-
-      $('btn-quick-show-answers').addEventListener('click', () => {
-        state.quickSearchRevealAnswers = true;
-        if (state.quickSearchLastQuery) runQuickSearch();
-      });
-
-      $('btn-quick-hide-answers').addEventListener('click', () => {
-        state.quickSearchRevealAnswers = false;
-        if (state.quickSearchLastQuery) runQuickSearch();
-      });
     }
 
     // === Обработчики ===
