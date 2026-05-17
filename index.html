@@ -380,10 +380,132 @@
       margin-bottom: 12px;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Быстрый поиск */
+    .quick-search-input {
+      width: 100%;
+      min-height: 120px;
+      padding: 16px;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+    .quick-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .quick-search-hint {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.45;
+    }
+    .quick-search-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .quick-search-actions .btn { margin-bottom: 0; font-size: 1rem; padding: 14px 20px; }
+    .voice-status {
+      display: block;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--primary);
+      font-weight: 600;
+      min-height: 1.4em;
+      margin-top: 6px;
+    }
+    .voice-status.listening { color: var(--success); }
+    .voice-status.error { color: var(--error); }
+    .voice-unsupported {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      background: #fef3c7;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .quick-search-weak {
+      padding: 12px 14px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      color: #9a3412;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    .quick-result-main {
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 20px;
+      background: var(--surface);
+    }
+    .quick-result-score {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .quick-result-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .quick-similar-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 8px 0 12px;
+    }
+    .quick-similar-item {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .quick-similar-item:hover { background: #f1f5f9; }
+    .quick-similar-item .quick-result-score { font-size: 0.9rem; margin-bottom: 6px; }
+    .quick-similar-item .question-text { font-size: 0.95rem; margin-bottom: 0; }
+    mark.match-highlight {
+      background: #fef08a;
+      color: inherit;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .quick-answers-hidden .view-answers li.correct-show {
+      background: transparent;
+      font-weight: normal;
+      color: inherit;
+    }
+
     @media (min-width: 600px) {
       .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .home-buttons .btn { margin-bottom: 0; }
       .home-buttons .btn-wide { grid-column: 1 / -1; }
+      .quick-search-actions.row-2 { display: grid; grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -403,8 +525,36 @@
           <button type="button" class="btn btn-secondary" data-action="random-ticket">Случайный билет</button>
           <button type="button" class="btn btn-secondary" data-action="all-tickets">Все билеты</button>
           <button type="button" class="btn btn-secondary" data-action="study-mode">Режим изучения</button>
+          <button type="button" class="btn btn-secondary btn-wide" data-action="quick-search">Быстрый поиск</button>
         </div>
       </div>
+    </section>
+
+    <!-- Быстрый поиск -->
+    <section id="screen-quick-search" class="screen">
+      <button type="button" class="back-link" data-action="go-home">← На главную</button>
+      <h2>Быстрый поиск</h2>
+      <div class="card">
+        <label for="quick-search-input" class="sr-only">Введите или надиктуйте вопрос</label>
+        <textarea id="quick-search-input" class="quick-search-input" rows="4" placeholder="Введите или надиктуйте вопрос" autocomplete="off"></textarea>
+        <p class="quick-search-hint">Можно ввести вопрос не дословно — поиск найдет наиболее похожие варианты по смыслу и ключевым словам.</p>
+        <div id="voice-unsupported" class="voice-unsupported" style="display:none" role="status">
+          Голосовой ввод не поддерживается в этом браузере. Введите вопрос вручную.
+        </div>
+        <div id="voice-controls">
+          <button type="button" class="btn btn-secondary" id="btn-voice-input">🎤 Голосовой ввод</button>
+          <span id="voice-status" class="voice-status" aria-live="polite"></span>
+        </div>
+        <div class="quick-search-actions row-2">
+          <button type="button" class="btn btn-primary" id="btn-quick-find">Найти</button>
+          <button type="button" class="btn btn-secondary" id="btn-quick-clear">Очистить</button>
+        </div>
+        <div class="quick-search-actions row-2">
+          <button type="button" class="btn btn-secondary" id="btn-quick-show-answers">Показать правильный ответ</button>
+          <button type="button" class="btn btn-secondary" id="btn-quick-hide-answers">Скрыть правильный ответ</button>
+        </div>
+      </div>
+      <div id="quick-search-results"></div>
     </section>
 
     <!-- Тренировка / билет (режим теста) -->
@@ -6026,8 +6176,21 @@
       studyFilterTicket: '',
       studySearch: '',
       answerHistory: {},
-      lastSession: null
+      lastSession: null,
+      quickSearchRevealAnswers: true,
+      quickSearchDebounceTimer: null,
+      quickSearchLastQuery: ''
     };
+
+    const SEARCH_STOP_WORDS = new Set([
+      'какой', 'какая', 'какие', 'какое', 'каким', 'какими', 'какого',
+      'что', 'где', 'кто', 'чем', 'чему', 'чего',
+      'в', 'на', 'при', 'по', 'из', 'и', 'или', 'для', 'с', 'со', 'к', 'от', 'до', 'у', 'о', 'об', 'а', 'но', 'не', 'ни', 'ли', 'же', 'бы', 'либо'
+    ]);
+
+    const QUICK_SEARCH_WEAK_THRESHOLD = 45;
+    let questionSearchIndex = null;
+    let speechRecognition = null;
 
     // === Утилиты ===
     function $(id) { return document.getElementById(id); }
@@ -6037,7 +6200,7 @@
       const el = $('screen-' + name);
       if (el) el.classList.add('active');
       state.screen = name;
-      saveProgress();
+      if (name !== 'quick-search') saveProgress();
     }
 
     function getQuestionById(id) {
@@ -6433,6 +6596,378 @@
       showScreen('study-detail');
     }
 
+    // === Быстрый поиск ===
+    function normalizeText(text) {
+      const raw = String(text || '')
+        .toLowerCase()
+        .replace(/ё/g, 'е')
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const tokens = raw
+        .split(' ')
+        .filter(w => w.length > 1 && !SEARCH_STOP_WORDS.has(w));
+      return { normalized: raw, tokens };
+    }
+
+    function tokenWeight(word) {
+      return Math.min(2.5, Math.max(1, word.length / 4));
+    }
+
+    function levenshteinSimilarity(a, b) {
+      if (a === b) return 1;
+      if (!a.length || !b.length) return 0;
+      const rows = a.length + 1;
+      const cols = b.length + 1;
+      const matrix = Array.from({ length: rows }, () => new Array(cols).fill(0));
+      for (let i = 0; i < rows; i++) matrix[i][0] = i;
+      for (let j = 0; j < cols; j++) matrix[0][j] = j;
+      for (let i = 1; i < rows; i++) {
+        for (let j = 1; j < cols; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j - 1] + cost
+          );
+        }
+      }
+      const dist = matrix[rows - 1][cols - 1];
+      return 1 - dist / Math.max(a.length, b.length);
+    }
+
+    function matchTokenToWord(queryToken, word) {
+      if (queryToken === word) return 1;
+      if (word.length >= 3 && queryToken.length >= 3) {
+        if (word.includes(queryToken) || queryToken.includes(word)) {
+          return 0.7 + 0.3 * (Math.min(queryToken.length, word.length) / Math.max(queryToken.length, word.length));
+        }
+        if (queryToken.length >= 4 && word.length >= 4) {
+          const sim = levenshteinSimilarity(queryToken, word);
+          if (sim >= 0.78) return sim * 0.92;
+        }
+      }
+      return 0;
+    }
+
+    function bestTokenScore(queryToken, words) {
+      let best = 0;
+      for (const w of words) {
+        best = Math.max(best, matchTokenToWord(queryToken, w));
+      }
+      return best;
+    }
+
+    function buildQuestionSearchIndex() {
+      questionSearchIndex = QUESTIONS.map(q => {
+        const questionNorm = normalizeText(q.question);
+        const answerNorms = q.answers.map(a => normalizeText(a.text));
+        const combinedNorm = normalizeText(
+          [q.question, ...q.answers.map(a => a.text)].join(' ')
+        );
+        return {
+          id: q.id,
+          questionWords: questionNorm.tokens,
+          answerWords: answerNorms.map(a => a.tokens),
+          allWords: combinedNorm.tokens,
+          normalizedQuestion: questionNorm.normalized,
+          normalizedCombined: combinedNorm.normalized
+        };
+      });
+    }
+
+    function computeQuestionSimilarity(queryNorm, entry) {
+      const qTokens = queryNorm.tokens;
+      if (!qTokens.length) return 0;
+
+      let matched = 0;
+      let total = 0;
+      for (const qt of qTokens) {
+        const w = tokenWeight(qt);
+        total += w;
+        const qScore = bestTokenScore(qt, entry.questionWords);
+        const aScore = Math.max(0, ...entry.answerWords.map(aw => bestTokenScore(qt, aw) * 0.85));
+        const allScore = bestTokenScore(qt, entry.allWords);
+        matched += Math.max(qScore, aScore, allScore * 0.95) * w;
+      }
+
+      let score = total ? (matched / total) * 100 : 0;
+      if (queryNorm.normalized.length >= 5 && entry.normalizedQuestion.includes(queryNorm.normalized)) {
+        score = Math.min(100, score + 18);
+      } else if (queryNorm.normalized.length >= 8 && entry.normalizedCombined.includes(queryNorm.normalized)) {
+        score = Math.min(100, score + 10);
+      }
+      return Math.round(Math.min(100, score));
+    }
+
+    function searchQuestions(queryText) {
+      if (!questionSearchIndex) buildQuestionSearchIndex();
+      const queryNorm = normalizeText(queryText);
+      if (!queryNorm.tokens.length && queryNorm.normalized.length < 2) return [];
+
+      const ranked = questionSearchIndex
+        .map(entry => ({
+          id: entry.id,
+          score: computeQuestionSimilarity(queryNorm, entry)
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      if (ranked.length && ranked[0].score > 0) return ranked;
+
+      if (queryNorm.normalized.length >= 3) {
+        return questionSearchIndex
+          .map(entry => {
+            let score = 0;
+            if (entry.normalizedQuestion.includes(queryNorm.normalized)) score = 60;
+            else if (entry.normalizedCombined.includes(queryNorm.normalized)) score = 45;
+            return { id: entry.id, score };
+          })
+          .filter(r => r.score > 0)
+          .sort((a, b) => b.score - a.score);
+      }
+      return ranked.slice(0, 6);
+    }
+
+    function getMatchedTokens(queryText) {
+      return normalizeText(queryText).tokens;
+    }
+
+    function highlightMatchedWords(text, matchedTokens) {
+      if (!matchedTokens.length) return escapeHtml(text);
+      const words = String(text).split(/(\s+)/);
+      return words.map(part => {
+        if (!part.trim()) return escapeHtml(part);
+        const normPart = normalizeText(part).normalized.replace(/\s/g, '');
+        const isMatch = matchedTokens.some(t => {
+          const np = normPart;
+          return np === t || (np.length >= 3 && t.length >= 3 && (np.includes(t) || t.includes(np)));
+        });
+        return isMatch ? `<mark class="match-highlight">${escapeHtml(part)}</mark>` : escapeHtml(part);
+      }).join('');
+    }
+
+    function renderQuickSearchAnswers(q, matchedTokens) {
+      return q.answers.map((a, i) => {
+        const showCorrect = state.quickSearchRevealAnswers && a.correct;
+        const cls = showCorrect ? 'correct-show' : '';
+        const text = highlightMatchedWords(a.text, matchedTokens);
+        return `<li class="${cls}">${LETTERS[i]}) ${text}</li>`;
+      }).join('');
+    }
+
+    function renderQuickSearchQuestionBlock(q, score, matchedTokens, isMain) {
+      const correctN = getCorrectCount(q);
+      const wrapCls = isMain ? 'quick-result-main' : 'quick-similar-item';
+      const hiddenCls = state.quickSearchRevealAnswers ? '' : ' quick-answers-hidden';
+      return `
+        <div class="${wrapCls}${hiddenCls}" data-question-id="${q.id}">
+          <div class="quick-result-score">Совпадение: ${score}%</div>
+          <div class="quick-result-meta">
+            <span class="meta-tag">Вопрос ${q.id}</span>
+            <span class="meta-tag">Билет ${q.ticket}</span>
+            <span class="meta-tag" style="background:#d1fae5;color:#065f46">Правильных: ${correctN}</span>
+          </div>
+          <div class="question-text">${highlightMatchedWords(q.question, matchedTokens)}</div>
+          <ul class="view-answers">${renderQuickSearchAnswers(q, matchedTokens)}</ul>
+        </div>
+      `;
+    }
+
+    function renderQuickSearchResults(queryText) {
+      const container = $('quick-search-results');
+      const trimmed = (queryText || '').trim();
+      state.quickSearchLastQuery = trimmed;
+
+      if (!trimmed) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const results = searchQuestions(trimmed);
+      const matchedTokens = getMatchedTokens(trimmed);
+
+      if (!results.length) {
+        container.innerHTML = `
+          <div class="quick-search-weak">
+            Точного совпадения не найдено, показаны наиболее похожие вопросы.
+          </div>
+          <p class="subtitle">Попробуйте ввести другие ключевые слова из вопроса.</p>
+        `;
+        return;
+      }
+
+      const best = results[0];
+      const bestQ = getQuestionById(best.id);
+      const weak = best.score < QUICK_SEARCH_WEAK_THRESHOLD;
+      const similar = results.slice(1, 6);
+
+      let html = '';
+      if (weak) {
+        html += '<div class="quick-search-weak">Точного совпадения не найдено, показаны наиболее похожие вопросы.</div>';
+      }
+      if (bestQ) {
+        html += renderQuickSearchQuestionBlock(bestQ, best.score, matchedTokens, true);
+      }
+      if (similar.length) {
+        html += '<h3 class="quick-similar-title">Похожие вопросы</h3>';
+        for (const item of similar) {
+          const q = getQuestionById(item.id);
+          if (q) html += renderQuickSearchQuestionBlock(q, item.score, matchedTokens, false);
+        }
+      }
+
+      container.innerHTML = html;
+      container.querySelectorAll('.quick-similar-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = Number(el.dataset.questionId);
+          const q = getQuestionById(id);
+          const hit = results.find(r => r.id === id);
+          if (!q || !hit) return;
+          const main = container.querySelector('.quick-result-main');
+          if (main) main.remove();
+          const block = document.createElement('div');
+          block.innerHTML = renderQuickSearchQuestionBlock(q, hit.score, matchedTokens, true);
+          const newMain = block.firstElementChild;
+          const title = container.querySelector('.quick-similar-title');
+          if (title) container.insertBefore(newMain, title);
+          else container.prepend(newMain);
+          el.remove();
+          newMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    }
+
+    function runQuickSearch() {
+      const input = $('quick-search-input');
+      renderQuickSearchResults(input ? input.value : '');
+    }
+
+    function scheduleQuickSearch() {
+      if (state.quickSearchDebounceTimer) {
+        clearTimeout(state.quickSearchDebounceTimer);
+      }
+      state.quickSearchDebounceTimer = setTimeout(() => {
+        state.quickSearchDebounceTimer = null;
+        runQuickSearch();
+      }, 300);
+    }
+
+    function clearQuickSearch() {
+      const input = $('quick-search-input');
+      if (input) input.value = '';
+      state.quickSearchLastQuery = '';
+      $('quick-search-results').innerHTML = '';
+      setVoiceStatus('');
+    }
+
+    function openQuickSearch() {
+      buildQuestionSearchIndex();
+      showScreen('quick-search');
+      const input = $('quick-search-input');
+      if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 100);
+      }
+      $('quick-search-results').innerHTML = '';
+      setVoiceStatus('');
+    }
+
+    function setVoiceStatus(text, type) {
+      const el = $('voice-status');
+      if (!el) return;
+      el.textContent = text || '';
+      el.className = 'voice-status' + (type ? ' ' + type : '');
+    }
+
+    function initVoiceInput() {
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const btn = $('btn-voice-input');
+      const unsupported = $('voice-unsupported');
+      const controls = $('voice-controls');
+
+      if (!SpeechRecognitionCtor) {
+        if (controls) controls.style.display = 'none';
+        if (unsupported) unsupported.style.display = 'block';
+        return;
+      }
+
+      if (unsupported) unsupported.style.display = 'none';
+      if (controls) controls.style.display = 'block';
+
+      speechRecognition = new SpeechRecognitionCtor();
+      speechRecognition.lang = 'ru-RU';
+      speechRecognition.interimResults = false;
+      speechRecognition.maxAlternatives = 1;
+
+      speechRecognition.onstart = () => setVoiceStatus('Слушаю…', 'listening');
+
+      speechRecognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(r => r[0].transcript)
+          .join(' ')
+          .trim();
+        const input = $('quick-search-input');
+        if (input && transcript) {
+          input.value = transcript;
+          runQuickSearch();
+        }
+        setVoiceStatus(transcript ? 'Готово' : 'Ничего не распознано', transcript ? '' : 'error');
+      };
+
+      speechRecognition.onerror = (event) => {
+        const code = event.error || '';
+        let msg = 'Ошибка распознавания';
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          msg = 'Доступ к микрофону запрещён';
+        } else if (code === 'no-speech') {
+          msg = 'Ничего не распознано';
+        } else if (code === 'audio-capture' || code === 'network') {
+          msg = 'Микрофон недоступен';
+        }
+        setVoiceStatus(msg, 'error');
+      };
+
+      speechRecognition.onend = () => {
+        const status = $('voice-status');
+        if (status && status.classList.contains('listening')) {
+          setVoiceStatus('');
+        }
+      };
+
+      if (btn) {
+        btn.addEventListener('click', () => {
+          try {
+            if (speechRecognition) speechRecognition.start();
+          } catch (e) {
+            setVoiceStatus('Микрофон недоступен', 'error');
+          }
+        });
+      }
+    }
+
+    function initQuickSearch() {
+      buildQuestionSearchIndex();
+      initVoiceInput();
+
+      const input = $('quick-search-input');
+      if (input) {
+        input.addEventListener('input', scheduleQuickSearch);
+      }
+
+      $('btn-quick-find').addEventListener('click', runQuickSearch);
+      $('btn-quick-clear').addEventListener('click', clearQuickSearch);
+
+      $('btn-quick-show-answers').addEventListener('click', () => {
+        state.quickSearchRevealAnswers = true;
+        if (state.quickSearchLastQuery) runQuickSearch();
+      });
+
+      $('btn-quick-hide-answers').addEventListener('click', () => {
+        state.quickSearchRevealAnswers = false;
+        if (state.quickSearchLastQuery) runQuickSearch();
+      });
+    }
+
     // === Обработчики ===
     function bindEvents() {
       document.querySelectorAll('[data-action]').forEach(el => {
@@ -6458,7 +6993,13 @@
               renderStudyList();
               showScreen('study');
               break;
+            case 'quick-search':
+              openQuickSearch();
+              break;
             case 'go-home':
+              if (speechRecognition) {
+                try { speechRecognition.abort(); } catch (e) { /* ignore */ }
+              }
               showScreen('home');
               updateResumeBanner();
               break;
@@ -6554,6 +7095,7 @@
     function init() {
       bindEvents();
       initStudyFilter();
+      initQuickSearch();
       updateResumeBanner();
     }
 
