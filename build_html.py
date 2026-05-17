@@ -642,11 +642,13 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     }
 
     function startTicket(ticket, randomize) {
+      if (!ticket) return;
       state.mode = 'ticket';
       state.currentTicket = ticket;
       let ids = getQuestionsByTicket(ticket).map(q => q.id);
+      if (!ids.length) return;
       if (randomize) ids = shuffle(ids);
-      startTraining(ids);
+      startTraining(ids, true);
     }
 
     function renderQuizQuestion() {
@@ -951,10 +953,12 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
               showScreen('home');
               updateResumeBanner();
               break;
-            case 'ticket-test':
+            case 'ticket-test': {
+              const ticket = state.currentTicket;
               clearSession();
-              startTicket(state.currentTicket, false);
+              startTicket(ticket, false);
               break;
+            }
             case 'ticket-view':
               state.viewAnswersVisible = true;
               renderTicketView();
@@ -977,12 +981,19 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
               break;
             case 'retry': {
               const ls = state.lastSession;
-              if (ls && ls.currentTicket) {
-                state.mode = ls.mode;
-                startTicket(ls.currentTicket, false);
-              } else if (ls && ls.questionIds) {
-                state.mode = ls.mode || 'training';
-                startTraining(ls.questionIds);
+              if (!ls) break;
+              if (ls.currentTicket) {
+                const ticket = ls.currentTicket;
+                clearSession();
+                state.lastSession = ls;
+                startTicket(ticket, false);
+              } else if (ls.questionIds && ls.questionIds.length > 0) {
+                const ids = [...ls.questionIds];
+                const mode = ls.mode || 'training';
+                clearSession();
+                state.lastSession = ls;
+                state.mode = mode;
+                startTraining(ids, true);
               } else {
                 clearSession();
                 state.mode = 'training';
