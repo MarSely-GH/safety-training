@@ -407,15 +407,17 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     /* Быстрый поиск */
     .quick-search-input {
       width: 100%;
-      min-height: 120px;
+      min-height: 90px;
       padding: 16px;
-      font-size: 1.05rem;
+      font-size: 16px;
       line-height: 1.45;
       border: 2px solid var(--border);
       border-radius: var(--radius);
       font-family: inherit;
       resize: vertical;
       margin-bottom: 12px;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
     }
     .quick-search-input:focus {
       outline: none;
@@ -425,8 +427,25 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     .quick-search-hint {
       font-size: 0.88rem;
       color: var(--text-muted);
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       line-height: 1.45;
+    }
+    .voice-block {
+      margin-bottom: 14px;
+    }
+    .voice-controls .btn {
+      margin-bottom: 8px;
+    }
+    .voice-keyboard-hint {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      margin: 0 0 8px;
     }
     .quick-search-actions {
       display: flex;
@@ -435,6 +454,11 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       margin-bottom: 12px;
     }
     .quick-search-actions .btn { margin-bottom: 0; font-size: 1rem; padding: 14px 20px; }
+    #btn-quick-find {
+      font-size: 1.05rem;
+      padding: 16px 20px;
+      min-height: 52px;
+    }
     .voice-status {
       display: block;
       text-align: center;
@@ -442,18 +466,23 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       color: var(--primary);
       font-weight: 600;
       min-height: 1.4em;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .voice-status.listening { color: var(--success); }
     .voice-status.error { color: var(--error); }
     .voice-unsupported {
-      font-size: 0.88rem;
-      color: var(--text-muted);
+      font-size: 0.9rem;
+      color: #92400e;
       padding: 10px 12px;
       background: #fef3c7;
+      border: 1px solid #fcd34d;
       border-radius: 8px;
-      margin-bottom: 12px;
-      line-height: 1.4;
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+    #btn-voice-input:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
     .quick-search-weak {
       padding: 12px 14px;
@@ -513,11 +542,34 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       color: inherit;
     }
 
+    @media (max-width: 599px) {
+      .quick-search-input {
+        min-height: 96px;
+        font-size: 16px;
+        padding: 14px;
+      }
+      .voice-keyboard-hint {
+        font-size: 0.95rem;
+        padding: 12px 14px;
+      }
+      #btn-quick-find {
+        font-size: 1.1rem;
+        padding: 18px 20px;
+        min-height: 56px;
+      }
+      #btn-voice-input {
+        font-size: 1.05rem;
+        padding: 16px 20px;
+        min-height: 52px;
+      }
+    }
+
     @media (min-width: 600px) {
       .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .home-buttons .btn { margin-bottom: 0; }
       .home-buttons .btn-wide { grid-column: 1 / -1; }
       .quick-search-actions.row-2 { display: grid; grid-template-columns: 1fr 1fr; }
+      .quick-search-input { min-height: 120px; font-size: 1.05rem; }
     }
   </style>
 </head>
@@ -548,14 +600,31 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       <h2>Быстрый поиск</h2>
       <div class="card">
         <label for="quick-search-input" class="sr-only">Введите или надиктуйте вопрос</label>
-        <textarea id="quick-search-input" class="quick-search-input" rows="4" placeholder="Введите или надиктуйте вопрос" autocomplete="off"></textarea>
+        <textarea
+          id="quick-search-input"
+          class="quick-search-input"
+          rows="4"
+          inputmode="text"
+          enterkeyhint="search"
+          autocomplete="off"
+          autocorrect="on"
+          autocapitalize="sentences"
+          spellcheck="true"
+          lang="ru"
+          placeholder="Введите вопрос или нажмите микрофон на клавиатуре телефона"
+        ></textarea>
         <p class="quick-search-hint">Можно ввести вопрос не дословно — поиск найдет наиболее похожие варианты по смыслу и ключевым словам.</p>
+        <div class="voice-block">
         <div id="voice-unsupported" class="voice-unsupported" style="display:none" role="status">
-          Голосовой ввод не поддерживается в этом браузере. Введите вопрос вручную.
+          Встроенный голосовой ввод сайта не поддерживается этим браузером. Используйте микрофон на клавиатуре телефона.
         </div>
-        <div id="voice-controls">
+        <div id="voice-controls" class="voice-controls">
           <button type="button" class="btn btn-secondary" id="btn-voice-input">🎤 Голосовой ввод</button>
+          <p class="voice-keyboard-hint" id="voice-keyboard-hint">
+            На телефоне можно нажать значок микрофона на клавиатуре и надиктовать вопрос.
+          </p>
           <span id="voice-status" class="voice-status" aria-live="polite"></span>
+        </div>
         </div>
         <div class="quick-search-actions row-2">
           <button type="button" class="btn btn-primary" id="btn-quick-find">Найти</button>
@@ -682,6 +751,7 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
     const QUICK_SEARCH_WEAK_THRESHOLD = 45;
     let questionSearchIndex = null;
     let speechRecognition = null;
+    let voiceInputBound = false;
 
     // === Утилиты ===
     function $(id) { return document.getElementById(id); }
@@ -1357,10 +1427,35 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       const input = $('quick-search-input');
       if (input) {
         input.value = '';
-        setTimeout(() => input.focus(), 100);
+        setTimeout(() => {
+          input.focus({ preventScroll: false });
+          try {
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          } catch (e) { /* ignore */ }
+        }, 150);
       }
       $('quick-search-results').innerHTML = '';
       setVoiceStatus('');
+      refreshVoiceInputUI();
+    }
+
+    function refreshVoiceInputUI() {
+      const btn = $('btn-voice-input');
+      const unsupported = $('voice-unsupported');
+      const controls = $('voice-controls');
+      if (controls) controls.style.display = 'block';
+      if (!hasSpeechRecognition()) {
+        if (unsupported) unsupported.style.display = 'block';
+        setupVoiceButtonUnsupported(btn);
+      } else {
+        if (unsupported) unsupported.style.display = 'none';
+        if (btn) {
+          btn.disabled = false;
+          btn.removeAttribute('aria-disabled');
+          btn.title = '';
+        }
+      }
     }
 
     function setVoiceStatus(text, type) {
@@ -1370,20 +1465,23 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       el.className = 'voice-status' + (type ? ' ' + type : '');
     }
 
+    function hasSpeechRecognition() {
+      return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    }
+
+    function setupVoiceButtonUnsupported(btn) {
+      if (!btn) return;
+      btn.disabled = true;
+      btn.setAttribute('aria-disabled', 'true');
+      btn.title = 'Используйте микрофон на клавиатуре телефона';
+    }
+
     function initVoiceInput() {
+      refreshVoiceInputUI();
+
       const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
       const btn = $('btn-voice-input');
-      const unsupported = $('voice-unsupported');
-      const controls = $('voice-controls');
-
-      if (!SpeechRecognitionCtor) {
-        if (controls) controls.style.display = 'none';
-        if (unsupported) unsupported.style.display = 'block';
-        return;
-      }
-
-      if (unsupported) unsupported.style.display = 'none';
-      if (controls) controls.style.display = 'block';
+      if (!SpeechRecognitionCtor) return;
 
       speechRecognition = new SpeechRecognitionCtor();
       speechRecognition.lang = 'ru-RU';
@@ -1425,8 +1523,10 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
         }
       };
 
-      if (btn) {
+      if (btn && !voiceInputBound) {
+        voiceInputBound = true;
         btn.addEventListener('click', () => {
+          if (btn.disabled) return;
           try {
             if (speechRecognition) speechRecognition.start();
           } catch (e) {
@@ -1443,6 +1543,13 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
       const input = $('quick-search-input');
       if (input) {
         input.addEventListener('input', scheduleQuickSearch);
+        input.addEventListener('change', scheduleQuickSearch);
+        input.addEventListener('keyup', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            runQuickSearch();
+          }
+        });
       }
 
       $('btn-quick-find').addEventListener('click', runQuickSearch);
