@@ -1,0 +1,75 @@
+name: Add voice search
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-voice-search.yml'
+      - 'voice-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-exact-page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add microphone button and voice recognition
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('exact/index.html')
+          text = p.read_text(encoding='utf-8')
+
+          if 'id="voice"' in text:
+              print('Voice search already present')
+              raise SystemExit(0)
+
+          css = r'''
+          .searchvoice{display:flex;gap:8px;align-items:stretch}.searchvoice .search{flex:1;min-width:0}.voicebtn{flex:0 0 54px;width:54px;border:2px solid var(--bd);border-radius:14px;background:#fff;color:var(--p);font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer}.voicebtn.listening{background:var(--p);border-color:var(--p);color:#fff}.voicehint{display:none;font-size:12px;color:var(--m);margin-top:6px}.voicehint.show{display:block}
+          '''
+          text = text.replace('</style>', css + '</style>', 1)
+
+          old = '<input id="s" class="search" type="search" placeholder="Введите часть вопроса…" autocomplete="off" autofocus>'
+          new = '<div class="searchvoice"><input id="s" class="search" type="search" placeholder="Введите часть вопроса…" autocomplete="off" autofocus><button id="voice" class="voicebtn" type="button" aria-label="Сказать вопрос голосом" title="Сказать вопрос голосом">🎤</button></div><div id="voicehint" class="voicehint">Нажмите микрофон и произнесите часть вопроса.</div>'
+          if old not in text:
+              raise SystemExit('Search input pattern not found')
+          text = text.replace(old, new, 1)
+
+          script = r'''<script>
+          (()=>{
+            const input=document.getElementById('s');
+            const btn=document.getElementById('voice');
+            const hint=document.getElementById('voicehint');
+            const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+            let rec=null, active=false;
+            const show=m=>{hint.textContent=m;hint.classList.add('show')};
+            const reset=()=>{active=false;btn.classList.remove('listening');btn.textContent='🎤';btn.setAttribute('aria-label','Сказать вопрос голосом')};
+            if(!SR){btn.addEventListener('click',()=>show('В этом браузере голосовой поиск недоступен. Откройте страницу в Chrome.'));return;}
+            rec=new SR(); rec.lang='ru-RU'; rec.interimResults=false; rec.continuous=false; rec.maxAlternatives=1;
+            rec.onstart=()=>{active=true;btn.classList.add('listening');btn.textContent='●';btn.setAttribute('aria-label','Слушаю');show('Говорите…')};
+            rec.onresult=e=>{const t=(e.results?.[0]?.[0]?.transcript||'').trim();if(t){input.value=t;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();show('Распознано: «'+t+'»')}};
+            rec.onerror=e=>{let m='Не удалось распознать речь.';if(e.error==='not-allowed'||e.error==='service-not-allowed')m='Разрешите браузеру доступ к микрофону.';else if(e.error==='audio-capture')m='Микрофон недоступен.';else if(e.error==='no-speech')m='Речь не услышана. Нажмите микрофон и попробуйте ещё раз.';show(m);reset()};
+            rec.onend=reset;
+            btn.addEventListener('click',()=>{try{if(active){rec.stop();return}show('Запрашиваю микрофон…');rec.start()}catch(e){reset();show('Нажмите микрофон ещё раз.')}});
+          })();
+          </script>'''
+          text = text.replace('</body>', script + '</body>', 1)
+          p.write_text(text, encoding='utf-8')
+          print('Voice search added')
+          PY
+      - name: Commit updated page
+        shell: bash
+        run: |
+          if git diff --quiet -- exact/index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exact/index.html
+          git commit -m "Add voice search button"
+          git push
