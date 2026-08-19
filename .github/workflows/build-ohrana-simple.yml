@@ -1,0 +1,46 @@
+name: Build simplified safety search
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-ohrana-simple.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build simple page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          src=Path('exact/index.html').read_text(encoding='utf-8')
+          m=re.search(r'window\.DATA=(\[.*?\]);</script>',src,re.S)
+          if not m: raise SystemExit('embedded DATA not found')
+          data=json.loads(m.group(1))
+          if len(data)!=465: raise SystemExit(f'expected 465, got {len(data)}')
+          for n,r in enumerate(data,1):
+              for k in ('t','q','x','a'):
+                  if k not in r: raise SystemExit(f'record {n} missing {k}')
+          payload=json.dumps(data,ensure_ascii=False,separators=(',',':'))
+          html=r'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1769e0"><meta name="app-version" content="simple-v1-2026-08-19"><title>Охрана труда — поиск</title><style>
+          :root{--bg:#f4f6f8;--card:#fff;--text:#182230;--muted:#667085;--line:#d0d5dd;--blue:#1769e0;--green:#065a35;--greenbg:#eafbf2;--warn:#9a5b00;--warnbg:#fff7e6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}.wrap{max-width:900px;margin:auto;padding:14px 12px 60px}.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 12px}h1{font-size:23px;margin:0 0 4px}.sub{margin:0 0 13px;color:var(--muted);font-size:14px}.searchrow{display:flex;gap:8px}.search{flex:1;min-width:0;border:2px solid var(--line);border-radius:15px;background:#fff;padding:14px;font-size:18px;outline:none}.search:focus{border-color:var(--blue)}.mic{width:60px;flex:0 0 60px;border:2px solid var(--line);border-radius:15px;background:#fff;font-size:27px}.mic.on{background:var(--blue);border-color:var(--blue);color:#fff}.hint{min-height:18px;margin-top:6px;color:var(--muted);font-size:13px}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}.tickets{font-size:18px;padding:11px 13px;border:2px solid var(--line);border-radius:13px;background:#fff;min-width:190px}.count{color:var(--muted);font-size:14px}.intro{text-align:center;color:var(--muted);padding:55px 12px;font-size:17px}.card{background:#fff;border:1px solid #e3e7ee;border-radius:16px;padding:15px;margin:11px 0;box-shadow:0 2px 8px rgba(16,24,40,.04)}.meta{font-size:14px;color:var(--blue);font-weight:700;margin-bottom:8px}.q{font-size:17px;line-height:1.42;font-weight:700}.ans{margin-top:11px;background:var(--greenbg);color:var(--green);border-radius:11px;padding:11px 12px;font-size:16px;font-weight:700;line-height:1.4}.ans small{display:block;font-size:12px;margin-bottom:4px}.warn{margin-top:9px;background:var(--warnbg);color:var(--warn);border-radius:10px;padding:9px 11px;font-size:13px}.foot{color:var(--muted);font-size:12px;line-height:1.45;margin-top:24px}mark{background:#fff0a6}@media(max-width:560px){h1{font-size:22px}.search{font-size:17px}.q{font-size:16px}.tickets{font-size:17px;min-width:170px}}
+          </style></head><body><main class="wrap"><section class="top"><h1>Охрана труда — быстрый поиск</h1><p class="sub">31 билет · 465 вопросов · данные из присланных файлов</p><div class="searchrow"><input id="s" class="search" type="search" placeholder="Напишите или скажите часть вопроса…" autocomplete="off"><button id="mic" class="mic" type="button">🎤</button></div><div id="hint" class="hint"></div><div class="controls"><select id="ticket" class="tickets"><option value="">Все билеты</option></select><span id="count" class="count"></span></div></section><section id="list"></section><div class="foot">Источник: «Билеты 2024 Охрана.docx» + «Ответы 2024docx.docx». Несоответствия исходных файлов не исправлялись и помечаются отдельно.</div></main><script>var DATA=__DATA__;</script><script>
+          (function(){var s=document.getElementById('s'),sel=document.getElementById('ticket'),list=document.getElementById('list'),count=document.getElementById('count'),mic=document.getElementById('mic'),hint=document.getElementById('hint');for(var n=1;n<=31;n++){var o=document.createElement('option');o.value=String(n);o.text='Билет '+n;sel.appendChild(o)}function esc(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]})}function norm(v){return String(v||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,' ').replace(/^\s+|\s+$/g,'')}var stop={};('какие какой какая какое что где когда кто как ли для при из на в во по и или а к ко от до с со у о об про за над под между должен должна должно должны нужно необходимо следует рекомендуется рекомендовано рекомендовать принять придать делать сделать называется является относятся относится требуется разрешается допускается можно нельзя выбрать выберите укажите указать определите определить перечисленных перечисленное перечисленные следующих следующего ниже верно правильно').split(' ').forEach(function(w){stop[w]=1});function words(v){var x=norm(v);return x?x.split(/\s+/):[]}function keys(v){var a=words(v),b=[],i;for(i=0;i<a.length;i++)if(a[i].length>1&&!stop[a[i]])b.push(a[i]);return b.length?b:a}function stem(w){return w.length<=5?w:w.substr(0,5)}function hit(t,arr){var p=stem(t),i;for(i=0;i<arr.length;i++){if(arr[i]===t)return 3;if(p.length>=4&&arr[i].length>=4&&stem(arr[i])===p)return 2}return 0}var idx=[];for(var i=0;i<DATA.length;i++){idx.push({r:DATA[i],qw:words(DATA[i].x),aw:words((DATA[i].x||'')+' '+(DATA[i].y||'')),qn:norm(DATA[i].x)})}function score(x,ts,ph){var m=0,z=0,i,t,h;for(i=0;i<ts.length;i++){t=ts[i];h=0;if(x.qn.indexOf(t)>=0){h=4;z+=28}else{h=hit(t,x.qw);if(h)z+=h===3?22:15}if(!h){h=hit(t,x.aw);if(h)z+=5}if(h)m++}var need=ts.length<=2?ts.length:Math.ceil(ts.length*.55);if(m<need)return-1;if(ph&&x.qn.indexOf(ph)>=0)z+=90;return z+m*4}function hi(v,ts){var out=esc(v),done={},i,t,re;for(i=0;i<ts.length;i++){t=ts[i];if(t.length<3||done[t])continue;done[t]=1;t=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');try{re=new RegExp('('+t+')','gi');out=out.replace(re,'<mark>$1</mark>')}catch(e){}}return out}function card(r,ts){var a='<article class="card"><div class="meta">Билет '+r.t+' · вопрос '+r.q+'</div><div class="q">'+hi(r.x,ts)+'</div><div class="ans"><small>ПРАВИЛЬНЫЙ ОТВЕТ: '+r.a+'</small>'+hi(r.y||('В ключе указан вариант №'+r.a+', но текста варианта в билете нет.'),ts)+'</div>';if(r.w)a+='<div class="warn">⚠ '+esc(r.w)+'</div>';return a+'</article>'}function render(){var q=s.value,ts=keys(q),ph=norm(q),tv=sel.value,a=[],i,z;if(!q&&!tv){list.innerHTML='<div class="intro">Выберите билет или начните поиск.</div>';count.innerHTML='';return}if(!q&&tv){for(i=0;i<DATA.length;i++)if(String(DATA[i].t)===tv)a.push(DATA[i]);a.sort(function(x,y){return x.q-y.q});count.innerHTML='Вопросов: '+a.length;list.innerHTML=a.map(function(r){return card(r,[])}).join('');return}for(i=0;i<idx.length;i++){if(tv&&String(idx[i].r.t)!==tv)continue;z=score(idx[i],ts,ph);if(z>=0)a.push({r:idx[i].r,s:z})}a.sort(function(x,y){return y.s-x.s||x.r.t-y.r.t||x.r.q-y.r.q});count.innerHTML='Найдено: '+a.length;if(!a.length){list.innerHTML='<div class="intro">Ничего не найдено. Попробуйте 1–3 ключевых слова.</div>';return}var h='';for(i=0;i<a.length&&i<80;i++)h+=card(a[i].r,ts);list.innerHTML=h}var tm;s.addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(render,50)});s.addEventListener('search',render);sel.addEventListener('change',function(){s.value='';hint.innerHTML='';render()});render();var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec;if(!SR){mic.onclick=function(){hint.innerHTML='Голосовой поиск недоступен в этом браузере. Откройте страницу в Chrome.'}}else{rec=new SR();rec.lang='ru-RU';rec.interimResults=false;rec.continuous=false;rec.maxAlternatives=1;rec.onstart=function(){mic.className='mic on';mic.innerHTML='●';hint.innerHTML='Говорите…'};rec.onresult=function(e){var t='';try{t=e.results[0][0].transcript||''}catch(x){}t=t.replace(/^\s+|\s+$/g,'');if(t){s.value=t;hint.innerHTML='Распознано: «'+esc(t)+'»';render()}};rec.onerror=function(e){hint.innerHTML=(e.error==='not-allowed'||e.error==='service-not-allowed')?'Разрешите браузеру доступ к микрофону.':'Не удалось распознать речь.'};rec.onend=function(){mic.className='mic';mic.innerHTML='🎤'};mic.onclick=function(){try{rec.start()}catch(e){}}}})();
+          </script></body></html>'''.replace('__DATA__',payload)
+          out=Path('ohrana-simple');out.mkdir(exist_ok=True);(out/'index.html').write_text(html,encoding='utf-8')
+          print('built',len(data),'records')
+          PY
+      - name: Commit page
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ohrana-simple/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Build simplified safety search"
+          git push
