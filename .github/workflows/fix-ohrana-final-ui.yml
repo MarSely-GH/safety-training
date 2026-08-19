@@ -1,0 +1,55 @@
+name: Fix ohrana final UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-ohrana-final-ui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix landing and ticket selection
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('ohrana-final/index.html')
+          s = p.read_text(encoding='utf-8')
+
+          new_search = r'''function searchNow(){const allTs=words(inp.value),ts=meaningful(inp.value),phrase=norm(inp.value),tv=ticket.value;let a=IDX.filter(ix=>!tv||String(ix.o.t)===tv);if(ts.length){a=a.map(ix=>[ix,score(ix,ts,phrase,allTs)]).filter(v=>v[1]>=0).sort((x,y)=>y[1]-x[1]).map(v=>v[0].o)}else if(tv){a=a.map(ix=>ix.o)}else{count.textContent='Всего: '+DATA.length+' вопросов';list.innerHTML='<div class="empty">Выберите билет или введите/скажите часть вопроса.</div>';return}count.textContent=ts.length?'Найдено: '+a.length:'Билет '+tv+': '+a.length+' вопросов';if(!a.length){list.innerHTML='<div class="empty">Ничего не найдено. Если выбран билет, очистите поиск или выберите другой билет.</div>';return}list.innerHTML=a.slice(0,80).map(o=>'<article class="card"><div class="meta">Билет '+esc(o.t??'?')+' · вопрос '+esc(o.q??'?')+'</div><div class="q">'+hi(o.x,ts)+'</div><div class="ans"><small>ПРАВИЛЬНЫЙ ОТВЕТ: '+esc(o.a??'?')+'</small>'+hi(o.y||('В ключе указан вариант №'+(o.a??'?')+', но текста этого варианта в билете нет.'),ts)+'</div>'+(o.w?'<div class="warn">⚠ '+esc(o.w)+'</div>':'')+'</article>').join('')}'''
+
+          s2, n = re.subn(r'function searchNow\(\)\{.*?\}\nfor\(let i=1;', new_search + '\nfor(let i=1;', s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Could not replace searchNow')
+
+          old = "ticket.addEventListener('change',searchNow);searchNow();"
+          new = "ticket.addEventListener('change',()=>{inp.value='';hint.textContent='';searchNow()});searchNow();"
+          if old not in s2:
+              raise SystemExit('Could not replace ticket change handler')
+          s2 = s2.replace(old, new, 1)
+          s2 = s2.replace('exact-search-v7-2026-08-19','exact-search-v8-2026-08-19',1)
+
+          p.write_text(s2, encoding='utf-8')
+          print('Fixed ohrana-final UI')
+          PY
+      - name: Commit fix
+        shell: bash
+        run: |
+          if git diff --quiet -- ohrana-final/index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ohrana-final/index.html
+          git commit -m "Fix ticket list and empty landing"
+          git push
