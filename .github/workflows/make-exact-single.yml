@@ -1,0 +1,70 @@
+name: Build exact single-file
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build single-file exact page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          exact = Path('exact')
+          data = []
+          for i in range(1, 7):
+              s = (exact / f'data{i}.js').read_text(encoding='utf-8')
+              m = re.search(r'\.concat\((\[.*\])\);\s*$', s, re.S)
+              if not m:
+                  raise SystemExit(f'Cannot parse data{i}.js')
+              data.extend(json.loads(m.group(1)))
+
+          if len(data) != 465:
+              raise SystemExit(f'Expected 465 records, got {len(data)}')
+          for n, r in enumerate(data, 1):
+              for k in ('t','q','x','a'):
+                  if k not in r:
+                      raise SystemExit(f'Record {n} missing {k}')
+
+          old = (exact / 'index.html').read_text(encoding='utf-8')
+          marker = '<script>window.DATA=[];</script>'
+          if marker in old:
+              prefix = old.split(marker, 1)[0]
+          else:
+              # If already single-file, keep everything before the first data script.
+              pos = old.find('<script>window.DATA=')
+              if pos < 0:
+                  raise SystemExit('Cannot find data marker in exact/index.html')
+              prefix = old[:pos]
+
+          prefix = re.sub(r'exact-search-v\d+-2026-08-19', 'exact-search-v7-2026-08-19', prefix)
+          app = (exact / 'app.js').read_text(encoding='utf-8')
+          payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+          cleanup = "try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}}catch(e){};"
+          html = prefix + '<script>' + cleanup + 'window.DATA=' + payload + ';</script><script>\n' + app + '\n</script></body></html>\n'
+          (exact / 'index.html').write_text(html, encoding='utf-8')
+          print('Built single-file exact/index.html with', len(data), 'records')
+          PY
+
+      - name: Commit built page
+        shell: bash
+        run: |
+          if git diff --quiet -- exact/index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exact/index.html
+          git commit -m "Make exact search self-contained"
+          git push
