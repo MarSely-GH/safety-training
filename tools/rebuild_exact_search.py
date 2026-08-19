@@ -1,0 +1,46 @@
+from pathlib import Path
+import base64, gzip, json, math, re
+
+ROOT = Path(__file__).resolve().parents[1]
+EXACT = ROOT / 'exact'
+src = (EXACT / 'index.html').read_text(encoding='utf-8')
+
+m = re.search(r"const B=(.*?);\s*let DATA", src, re.S)
+if not m:
+    raise SystemExit('Could not find embedded exact database')
+parts = re.findall(r"'([^']*)'", m.group(1))
+if not parts:
+    raise SystemExit('Could not read embedded database chunks')
+raw = gzip.decompress(base64.b64decode(''.join(parts)))
+data = json.loads(raw.decode('utf-8'))
+if len(data) != 465:
+    raise SystemExit(f'Expected 465 records, got {len(data)}')
+
+n = 6
+step = math.ceil(len(data) / n)
+for i in range(n):
+    chunk = data[i*step:(i+1)*step]
+    text = 'window.DATA=(window.DATA||[]).concat(' + json.dumps(chunk, ensure_ascii=False, separators=(',', ':')) + ');\n'
+    (EXACT / f'data{i+1}.js').write_text(text, encoding='utf-8')
+
+app = r'''const $=s=>document.querySelector(s),inp=$('#s'),ticket=$('#ticket'),list=$('#list'),count=$('#count'),voice=$('#voice'),hint=$('#voicehint');
+const norm=s=>(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,' ').trim();
+const GENERIC=new Set(('какие какой какая какое что где когда кто как ли для при из на в во по и или а к ко от до с со у о об про за над под между должен должна должно должны нужно необходимо следует рекомендуется рекомендовано рекомендованы рекомендовать принять придать делать сделать называется является относятся относится требуется разрешается допускается можно нельзя имеется имеет иметь будет быть выбрать выберите укажите указать определите определить перечисленных перечисленное перечисленные следующих следующего ниже верно правильно').split(' '));
+const words=s=>norm(s).split(/\s+/).filter(Boolean);
+function meaningful(q){const all=words(q).filter(x=>x.length>1),m=all.filter(x=>!GENERIC.has(x));return m.length?m:all}
+function pref(w){return w.length<=5?w:w.slice(0,5)}
+function termHit(t,arr){if(arr.includes(t))return 3;const p=pref(t);if(p.length>=4&&arr.some(w=>w.length>=4&&pref(w)===p))return 2;return 0}
+const IDX=(window.DATA||[]).map(o=>({o,qw:words(o.x),aw:words(o.y),qn:norm(o.x),an:norm(o.y)}));
+function score(ix,ts,phrase,allTs){if(!ts.length)return 1;let matched=0,z=0;for(const t of ts){let h=0;if(ix.qn.includes(t)){h=4;z+=28}else{h=termHit(t,ix.qw);if(h)z+=h===3?22:15}if(!h){if(ix.an.includes(t)){h=3;z+=8}else{const ah=termHit(t,ix.aw);if(ah){h=ah;z+=5}}}if(h)matched++}const need=ts.length<=2?ts.length:Math.ceil(ts.length*.6);if(matched<need)return-1;if(phrase&&ix.qn.includes(phrase))z+=90;for(const t of allTs||[]){if(!ts.includes(t)&&t.length>3&&ix.qn.includes(t))z+=4}z+=matched*4;return z}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function hi(s,ts){let out=esc(s);for(const t of [...new Set(ts)].sort((a,b)=>b.length-a.length)){if(t.length<3)continue;const x=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');out=out.replace(new RegExp('('+x+')','gi'),'<mark>$1</mark>')}return out}
+function searchNow(){const allTs=words(inp.value),ts=meaningful(inp.value),phrase=norm(inp.value),tv=ticket.value;let a=IDX.filter(ix=>!tv||String(ix.o.t)===tv);if(ts.length)a=a.map(ix=>[ix,score(ix,ts,phrase,allTs)]).filter(v=>v[1]>=0).sort((x,y)=>y[1]-x[1]).map(v=>v[0].o);else a=a.slice(0,40);count.textContent=ts.length||tv?'Найдено: '+a.length:'Всего: '+(window.DATA||[]).length+' вопросов';if(!a.length){list.innerHTML='<div class="empty">Ничего не найдено. Можно сказать короче: 1–3 ключевых слова из вопроса.</div>';return}list.innerHTML=a.slice(0,80).map(o=>'<article class="card"><div class="meta">Билет '+o.t+' · вопрос '+o.q+'</div><div class="q">'+hi(o.x,ts)+'</div><div class="ans"><small>ПРАВИЛЬНЫЙ ОТВЕТ: '+o.a+'</small>'+hi(o.y||('В ключе указан вариант №'+o.a+', но текста этого варианта в билете нет.'),ts)+'</div>'+(o.w?'<div class="warn">⚠ '+esc(o.w)+'</div>':'')+'</article>').join('')}
+for(let i=1;i<=31;i++)ticket.insertAdjacentHTML('beforeend','<option value="'+i+'">Билет '+i+'</option>');let tm;inp.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(searchNow,40)});ticket.addEventListener('change',searchNow);searchNow();
+(()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec;if(!SR){voice.addEventListener('click',()=>hint.textContent='Голосовой ввод не поддерживается этим браузером. Лучше открыть страницу в Chrome.');return}rec=new SR();rec.lang='ru-RU';rec.interimResults=false;rec.continuous=false;rec.maxAlternatives=1;rec.onstart=()=>{voice.classList.add('listening');voice.textContent='●';hint.textContent='Говорите…'};rec.onresult=e=>{const t=(e.results&&e.results[0]&&e.results[0][0]&&e.results[0][0].transcript||'').trim();if(!t)return;inp.value=t;searchNow();inp.focus();hint.textContent='Распознано: «'+t+'»'};rec.onerror=e=>{let m='Не удалось распознать речь.';if(e.error==='not-allowed'||e.error==='service-not-allowed')m='Разрешите браузеру доступ к микрофону.';else if(e.error==='no-speech')m='Речь не услышана. Нажмите микрофон и попробуйте ещё раз.';else if(e.error==='audio-capture')m='Микрофон недоступен.';hint.textContent=m};rec.onend=()=>{voice.classList.remove('listening');voice.textContent='🎤'};voice.addEventListener('click',()=>{try{rec.start()}catch(_){}})})();
+'''
+(EXACT / 'app.js').write_text(app, encoding='utf-8')
+
+index = r'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#155eef"><meta name="description" content="Быстрый поиск ответов по билетам охраны труда"><meta name="app-version" content="exact-search-v4-2026-08-19"><title>Охрана труда — быстрый поиск</title><style>
+:root{--b:#f4f6f8;--c:#fff;--t:#17202a;--m:#667085;--p:#155eef;--g:#067647;--gb:#ecfdf3;--bd:#d0d5dd;--w:#b54708;--wb:#fffaeb}*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}.wrap{max-width:900px;margin:auto;padding:14px 12px 60px}.top{position:sticky;top:0;z-index:5;background:rgba(244,246,248,.97);backdrop-filter:blur(9px);padding:10px 0 12px}h1{font-size:23px;margin:0 0 3px}.sub{margin:0 0 12px;color:var(--m);font-size:13px;line-height:1.4}.searchvoice{display:flex;gap:8px;align-items:stretch}.search{flex:1;min-width:0;width:100%;font-size:18px;padding:14px;border:2px solid var(--bd);border-radius:14px;outline:0;background:#fff}.search:focus{border-color:var(--p)}.voicebtn{flex:0 0 58px;width:58px;border:2px solid var(--bd);border-radius:14px;background:#fff;color:var(--p);font-size:25px;display:flex;align-items:center;justify-content:center;cursor:pointer}.voicebtn.listening{background:var(--p);border-color:var(--p);color:#fff}.voicehint{font-size:12px;color:var(--m);margin-top:6px;min-height:17px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}select{font:inherit;padding:9px 11px;border:1px solid var(--bd);border-radius:11px;background:#fff}.count{font-size:13px;color:var(--m)}.card{background:var(--c);border:1px solid #e4e7ec;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 2px 10px rgba(16,24,40,.04)}.meta{font-size:13px;color:var(--p);font-weight:800;margin-bottom:7px}.q{font-size:17px;font-weight:700;line-height:1.38}.ans{margin-top:11px;padding:11px 12px;border-radius:12px;background:var(--gb);color:#054f31;font-size:16px;font-weight:800}.ans small{display:block;color:var(--g);font-size:11px;margin-bottom:4px}.warn{margin-top:8px;background:var(--wb);color:var(--w);border-radius:10px;padding:8px 10px;font-size:12px}.empty{text-align:center;color:var(--m);padding:50px 10px}.note{font-size:12px;color:var(--m);padding:18px 2px;line-height:1.45}mark{background:#fff0b3;border-radius:2px}@media(max-width:540px){h1{font-size:21px}.search{font-size:16px}.q{font-size:16px}.ans{font-size:15px}.voicebtn{flex-basis:56px;width:56px}}</style></head><body><main class="wrap"><section class="top"><h1>Охрана труда — быстрый поиск</h1><p class="sub">31 билет · 465 вопросов · вопрос и правильный ответ взяты из присланных файлов</p><div class="searchvoice"><input id="s" class="search" type="search" placeholder="Введите или скажите часть вопроса…" autocomplete="off" autofocus><button id="voice" class="voicebtn" type="button" aria-label="Сказать вопрос голосом" title="Сказать вопрос голосом">🎤</button></div><div id="voicehint" class="voicehint"></div><div class="row"><select id="ticket"><option value="">Все билеты</option></select><span id="count" class="count">Загрузка базы…</span></div></section><section id="list"></section><div class="note">Источник: «Билеты 2024 Охрана.docx» + «Ответы 2024docx.docx». Содержание не исправлялось по внешним источникам; найденные несоответствия помечаются предупреждением.</div></main><script>window.DATA=[];</script><script src="data1.js?v=4"></script><script src="data2.js?v=4"></script><script src="data3.js?v=4"></script><script src="data4.js?v=4"></script><script src="data5.js?v=4"></script><script src="data6.js?v=4"></script><script src="app.js?v=4"></script></body></html>'''
+(EXACT / 'index.html').write_text(index, encoding='utf-8')
+print('Rebuilt exact search with', len(data), 'records')
