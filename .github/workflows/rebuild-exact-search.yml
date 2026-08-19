@@ -1,0 +1,29 @@
+name: Rebuild exact search
+
+on:
+  push:
+    paths:
+      - '.github/workflows/rebuild-exact-search.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild exact app
+        run: python tools/rebuild_exact_search.py
+      - name: Commit rebuilt app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exact
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Improve exact voice search matching"
+          git push
