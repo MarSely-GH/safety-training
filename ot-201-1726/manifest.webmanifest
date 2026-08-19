@@ -1,0 +1,14 @@
+{
+  "name": "Olimpox",
+  "short_name": "Olimpox",
+  "description": "Поиск ответов ОТ 201.13 и ОТ 1726.13",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1769e0",
+  "icons": [
+    {"src": "../ohrana/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "../ohrana/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}
