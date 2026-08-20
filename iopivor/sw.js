@@ -1,4 +1,4 @@
-const CACHE='iopivor-simple-v5';
+const CACHE='iopivor-simple-v6';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./app.js','./rules1.js','./rules2.js','./rules3.js','./rules4.js','./rules5.js','./rules6.js','./rules7.js'];
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
