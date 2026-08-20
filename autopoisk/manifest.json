@@ -1,0 +1,25 @@
+{
+  "name": "АвтоПоиск",
+  "short_name": "АвтоПоиск",
+  "description": "Поиск автомобилей по госномеру, марке и организации",
+  "lang": "ru",
+  "id": "/safety-training/autopoisk/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#f4f7fb",
+  "theme_color": "#1769aa",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
