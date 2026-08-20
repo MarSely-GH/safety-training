@@ -1,4 +1,4 @@
-const CACHE="autopoisk-v13-design3";
+const CACHE="autopoisk-v13-design4";
 const ASSETS=["./","./index.html","./manifest.json","./icon.svg","./hero-truck.svg","./app.js","./base1.js","./base2.js","./base3.js","./base4.js"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}));self.skipWaiting();});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
