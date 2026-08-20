@@ -1,0 +1,104 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1769aa"><meta name="application-name" content="АвтоПоиск"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="АвтоПоиск"><meta name="description" content="АвтоПоиск — поиск автомобилей"><link rel="manifest" href="./manifest.json"><link rel="icon" href="./icon.svg" type="image/svg+xml"><title>АвтоПоиск</title><style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f7fb;color:#172033;font-family:Arial,"Segoe UI",sans-serif;padding-bottom:78px}
+.wrap{max-width:760px;margin:0 auto;padding:14px 12px 28px}
+.head{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
+.logo{font-size:34px}.title{font-size:27px;font-weight:800}.sub{font-size:13px;color:#6b7789;margin-top:3px}
+.card{background:#fff;border:1px solid #d9e3ee;border-radius:15px;padding:14px;margin-bottom:12px}
+input,select{width:100%;padding:13px;border:1.5px solid #b8c8d7;border-radius:11px;font-size:17px;background:#fff}
+.search{font-size:20px;border:2px solid #9ebed8}
+.row{display:flex;gap:8px;margin-top:9px}.row>*{flex:1}
+button{border:0;border-radius:11px;padding:13px 12px;font-size:16px;font-weight:700}
+.primary{background:#1769aa;color:#fff}.soft{background:#e9f3fb;color:#0f568d}
+.red{background:#fdecea;color:#9b251b}.green{background:#e8f5ee;color:#12633f}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.stat{background:#fff;border:1px solid #d9e3ee;border-radius:12px;padding:9px 12px}.stat b{font-size:20px}.stat span{color:#6b7789;margin-left:5px;font-size:13px}
+.result{background:#fff;border:1px solid #d9e3ee;border-radius:14px;padding:13px;margin-bottom:9px}
+.top{display:flex;justify-content:space-between;gap:8px}.model{font-weight:800;font-size:17px}.plate{font-weight:900;font-size:19px;color:#0f568d;white-space:nowrap}
+.org{margin-top:7px;color:#455266}.status{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.ok{background:#e8f5ee;color:#12633f}.soon{background:#fff4cc;color:#7c5c00}.expired{background:#fdecea;color:#9b251b}.unknown{background:#eef2f6;color:#596579}
+.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1;padding:9px;font-size:14px}
+.empty{padding:22px;text-align:center;color:#6b7789;background:#fff;border:1px dashed #bbc9d6;border-radius:14px}
+.section{display:none}.section.active{display:block}
+.formtitle{font-size:20px;font-weight:800;margin-bottom:10px}.label{font-size:13px;color:#6b7789;margin:10px 2px 5px}
+.note{font-size:13px;color:#6b7789;line-height:1.4;margin-top:10px}
+.msg{margin-top:10px;padding:10px;border-radius:10px;display:none}.msg.show{display:block}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d9e3ee;display:flex;justify-content:center}
+.navin{width:100%;max-width:760px;display:grid;grid-template-columns:1fr 1fr 1fr}.nav button{background:#fff;color:#657286;padding:10px 3px;font-size:12px}.nav button.on{color:#1769aa}
+.ico{display:block;font-size:21px;margin-bottom:2px}
+.check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;color:#455266}.check input{width:20px;height:20px}
+.baseitem{background:#fff;border:1px solid #d9e3ee;border-radius:12px;padding:11px;margin-bottom:8px}
+.warning{background:#fff7db;border:1px solid #e6d386;border-radius:11px;padding:10px;font-size:13px;line-height:1.4;margin-top:10px}
+.searchline{display:flex;gap:8px;align-items:stretch}
+.searchline .search{flex:1;min-width:0}
+.micbtn{width:62px;flex:0 0 62px;padding:8px;border:2px solid #9ebed8;background:#fff;color:#172033;font-size:27px}
+.micbtn.listening{background:#1769aa;color:#fff;border-color:#1769aa}
+.voicehint{min-height:18px;margin:7px 2px 0;color:#6b7789;font-size:12px}
+</style></head><body>
+<div class="wrap">
+  <div class="head"><div class="logo">🚙</div><div><div class="title">АвтоПоиск</div><div class="sub">Версия 13 PWA • голосовой поиск • массовый импорт обновлений</div></div></div>
+
+  <div id="secSearch" class="section active">
+    <div class="card">
+      <div class="searchline"><input id="q" class="search" type="search" placeholder="Номер, марка или организация" autocomplete="off"><button id="voiceBtn" class="micbtn" type="button" aria-label="Голосовой поиск" title="Голосовой поиск">🎤</button></div>
+      <div id="voiceHint" class="voicehint"></div>
+      <div class="row"><button class="primary" onclick="doSearch()">🔎 Найти</button><button class="soft" onclick="clearSearch()">Очистить</button></div><div class="note" style="margin-top:9px"><b>Важно:</b> срок пропуска НЕ влияет на поиск. Просроченная машина будет найдена и показана красным.</div>
+    </div>
+    <div class="stats"><div class="stat"><b id="found">0</b><span>найдено</span></div><div class="stat"><b id="total">0</b><span>в базе</span></div></div>
+    <div id="results"></div>
+  </div>
+
+  <div id="secAdd" class="section">
+    <div class="card">
+      <div id="formTitle" class="formtitle">Добавить автомобиль</div>
+      <input id="editIndex" type="hidden" value="">
+      <div class="label">Марка / модель</div><input id="model" type="text" placeholder="Например: УАЗ ПАТРИОТ">
+      <div class="label">Гос. номер *</div><input id="plate" type="text" placeholder="Например: А123ВС89">
+      <div class="label">Организация</div><input id="org" type="text" placeholder="Можно оставить пустым">
+      <div class="label">Пропуск действует до</div><input id="validTo" type="date" value="2026-12-31">
+      <div class="row"><button class="primary" onclick="saveCar()">💾 Сохранить</button><button id="cancelBtn" class="soft" style="display:none" onclick="cancelEdit()">Отмена</button></div>
+      <div id="formMsg" class="msg"></div>
+      <div class="note">Служебные цифровые индексы возле марки можно не писать: «УАЗ 315196» → «УАЗ».</div>
+    </div>
+  </div>
+
+  <div id="secBase" class="section">
+    <div class="card">
+      <div class="formtitle">База автомобилей</div>
+      <div class="stats">
+        <div class="stat"><b id="cntActive">0</b><span>действуют</span></div>
+        <div class="stat"><b id="cntSoon">0</b><span>до 30 дней</span></div>
+        <div class="stat"><b id="cntExpired">0</b><span>просрочено</span></div>
+      </div>
+      <select id="baseFilter" onchange="renderBase()">
+        <option value="all">Все автомобили</option>
+        <option value="active">Действующие</option>
+        <option value="soon">Истекают до 30 дней</option>
+        <option value="expired">Просроченные</option>
+      </select>
+      <div class="row"><button class="green" onclick="exportBackup()">💾 Скачать резервную копию</button></div>
+      <label class="soft" style="display:block;text-align:center;padding:13px;border-radius:11px;font-weight:700;margin-top:8px">📂 Восстановить копию
+        <input id="backupFile" type="file" accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">
+      </label>
+      <div style="height:1px;background:#d9e3ee;margin:15px 0"></div>
+      <div class="formtitle" style="font-size:18px">Массовое обновление базы</div>
+      <div class="note">Новый список можно добавить без замены HTML: выберите JSON-пакет, который я подготовлю по вашим фото.</div>
+      <div class="label">Файл обновления JSON</div>
+      <input id="updateFile" type="file" accept=".json,application/json,text/plain" onchange="readUpdateFile(this.files[0])">
+      <div class="label">Или вставьте содержимое пакета</div>
+      <textarea id="updateText" style="width:100%;min-height:120px;padding:12px;border:1.5px solid #b8c8d7;border-radius:11px;font-family:monospace;font-size:13px" placeholder='{"format":"autopoisk-update-v1","cars":[...]}'></textarea>
+      <div class="label">Режим импорта</div>
+      <select id="updateMode">
+        <option value="add">Только добавить новые машины</option>
+        <option value="update">Добавить новые + обновить существующие</option>
+      </select>
+      <div class="row"><button class="soft" onclick="previewUpdate()">Проверить</button><button class="primary" onclick="applyUpdate()">Применить</button></div>
+      <button class="soft" style="width:100%;margin-top:8px" onclick="clearUpdate()">Очистить пакет</button>
+      <div id="updateSummary" class="msg"></div>
+      <div class="warning">Новые записи сохраняются в браузере этого устройства. Периодически делайте резервную копию, особенно перед очисткой данных Chrome или сменой телефона.</div>
+    </div>
+    <div id="baseList"></div>
+  </div>
+</div>
+<div class="nav"><div class="navin"><button id="navSearch" class="on" onclick="showSec('Search')"><span class="ico">🔎</span>Поиск</button><button id="navAdd" onclick="showSec('Add')"><span class="ico">➕</span>Добавить</button><button id="navBase" onclick="showSec('Base')"><span class="ico">🚗</span>База</button></div></div>
+<script src="./base1.js"></script><script src="./base2.js"></script><script src="./base3.js"></script><script src="./base4.js"></script><script src="./app.js"></script></body></html>
