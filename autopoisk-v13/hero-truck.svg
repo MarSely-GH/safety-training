@@ -1,1 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" role="img" aria-label="Автомобиль"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".96"/><stop offset="1" stop-color="#dcecff" stop-opacity=".9"/></linearGradient><linearGradient id="car" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1687ff"/><stop offset="1" stop-color="#0754d6"/></linearGradient><filter id="shadow" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#4d79ad" flood-opacity=".2"/></filter></defs><g filter="url(#shadow)"><rect x="88" y="54" width="584" height="252" rx="126" fill="url(#bg)" stroke="#ffffff" stroke-width="3"/><path d="M176 220c13-6 27-10 43-12l50-8 45-70c11-17 29-27 49-27h103c22 0 42 11 53 30l39 67 48 10c20 4 37 17 45 35l5 12H158l5-13c3-9 8-17 13-24z" fill="url(#car)"/><path d="M334 135h121c13 0 25 7 32 18l27 46H293l31-49c3-5 6-10 10-15z" fill="#dff0ff"/><path d="M350 145h49v45h-78l29-45zm62 0h40c9 0 17 5 22 12l20 33h-82v-45z" fill="#b9dcff"/><path d="M180 226h424c15 0 28 12 28 28v3H152v-3c0-16 13-28 28-28z" fill="#0c4ebd" opacity=".92"/><circle cx="257" cy="255" r="37" fill="#14243a"/><circle cx="257" cy="255" r="17" fill="#d7e7f7"/><circle cx="533" cy="255" r="37" fill="#14243a"/><circle cx="533" cy="255" r="17" fill="#d7e7f7"/><path d="M196 211h62" stroke="#9ed4ff" stroke-width="10" stroke-linecap="round"/><path d="M567 211h37" stroke="#dff4ff" stroke-width="10" stroke-linecap="round"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" role="img" aria-label="КП 12">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8f2ff"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d6efd"/>
+      <stop offset="1" stop-color="#0a53be"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#6c90bf" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="40" y="56" width="680" height="248" rx="52" fill="url(#bg)" stroke="#d5e5f8" stroke-width="4"/>
+    <rect x="76" y="92" width="220" height="176" rx="40" fill="url(#blue)"/>
+    <text x="186" y="205" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="88" font-weight="900" fill="#ffffff">КП</text>
+    <text x="515" y="190" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="112" font-weight="900" fill="#102547">12</text>
+    <text x="514" y="232" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700" fill="#6b7f9d">контрольно-пропускной пункт</text>
+    <rect x="345" y="101" width="286" height="12" rx="6" fill="#d9e7f7"/>
+    <rect x="345" y="255" width="220" height="12" rx="6" fill="#d9e7f7"/>
+  </g>
+</svg>
