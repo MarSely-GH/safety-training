@@ -34,16 +34,15 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin
 
     document.body.innerHTML=parsed.body.innerHTML;
 
-    // Выполняем скрипты вручную после вставки интерфейса.
-    (0,eval)(core);
-    (0,eval)(voice);
+    // ВАЖНО: core и voice выполняются одним блоком, чтобы голосовой код видел функции калькулятора.
+    (0,eval)(core+'\n'+voice);
 
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
     }
   }catch(e){
     console.error(e);
-    document.getElementById('loader').innerHTML='<div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу. Если не поможет — откройте ссылку в новой вкладке.</p><p class="muted" style="font-size:12px">'+String(e.message||e)+'</p></div>';
+    document.body.innerHTML='<div class="loader"><div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу. Если не поможет — откройте ссылку в новой вкладке.</p><p class="muted" style="font-size:12px">'+String(e.message||e)+'</p></div></div>';
   }
 })();
 </script>
