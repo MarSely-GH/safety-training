@@ -1,0 +1,157 @@
+d var(--line);background:#fff;color:var(--blue);border-radius:2px;padding:8px 9px;font-size:12px}
+.go{width:100%;background:var(--blue);color:#fff;border:none;border-radius:2px;padding:12px;font-size:13px;font-weight:700;margin-top:12px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+"use strict";
+var MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+var MSHORT=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+var MGEN=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+var HOLIDAYS={0:[1,2,3,4,5,6,7,8],1:[23],2:[8],4:[1,9],5:[12],10:[4]};
+var CODES={
+ "В":  {h:0, n:0,on:0,k:"rest",  t:"Межвахта, дома"},
+ "Вв": {h:0, n:0,on:1,k:"onrest",t:"Выходной на вахте, надбавка идёт"},
+ "12": {h:12,n:0,on:1,k:"day",   t:"Дневная смена 08:00-20:00"},
+ "9":  {h:9, n:0,on:1,k:"day",   t:"Укороченная дневная, 9 часов"},
+ "4н": {h:4, n:2,on:1,k:"night", t:"Первый вечер ночной вахты, 20:00-24:00"},
+ "12н":{h:12,n:8,on:1,k:"night", t:"Ночная вахта, полные сутки графика"},
+ "8н": {h:8, n:6,on:1,k:"night", t:"Последнее утро ночной вахты, 00:00-08:00"},
+ "Пр": {h:0, n:0,on:1,k:"move",  t:"Прилёт"},
+ "От": {h:0, n:0,on:1,k:"move",  t:"Отлёт"},
+ "О":  {h:0, n:0,on:0,k:"vac",   t:"Отпуск"}
+};
+var PICKER=["В","Вв","12","9","4н","12н","8н","Пр","От","О"];
+function dim(y,m){return new Date(y,m+1,0).getDate();}
+function rub(v,d){d=d||0;return (isFinite(v)?v:0).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d})+" \u20BD";}
+function nf(v,d){d=d||0;return (isFinite(v)?v:0).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function iso(y,m,d){return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function blankGrids(){var g=[];for(var m=0;m<12;m++)g.push(new Array(31).fill("В"));return g;}
+function build(sp){var a=new Array(31).fill("В");sp.forEach(function(s){for(var d=s[0];d<=s[1];d++)a[d-1]=s[2];});return a;}
+function blankYear(ok){return{grids:blankGrids(),oklads:new Array(12).fill(ok||47438),
+ extras:new Array(12).fill(0),travels:new Array(12).fill(2400)};}
+function defState(){
+ var n=new Date(), cy=n.getFullYear(), cm=n.getMonth(), ys={};
+ ys[String(cy)]=blankYear(47438);
+ return{v:5,cur:cy,start:cm,sel:cm,selY:cy,brush:"12",years:ys,
+ norma:164.33,lich:0,panel:"",from:iso(cy,cm,1),to:iso(cy,cm,dim(cy,cm)),
+ p:{rk:80,sn:80,prem:45,night:35,vahtaDay:287,prof:1,ndfl1:13,ndfl2:15,
+    limMain:2400000,limRksn:5000000,avansK:1.05},
+ drag:false,vac:{days:38,avg:8591,useYear:false,bonus:0}};}
+var S;
+try{var raw=localStorage.getItem("vahta.v5");S=raw?JSON.parse(raw):defState();}catch(e){S=defState();}
+if(!S||S.v!==5||!S.years)S=defState();
+function save(){try{localStorage.setItem("vahta.v5",JSON.stringify(S));}catch(e){}}
+function Yr(y){var k=String(y);
+ if(!S.years[k]){var pr=S.years[String(y-1)];S.years[k]=blankYear(pr?pr.oklads[11]:47438);}
+ return S.years[k];}
+
+function calcYear(y){
+ var yr=Yr(y),p=S.p,rk=p.rk/100,sn=p.sn/100,prem=p.prem/100,mult=1+rk+sn;
+ var months=[],ytdM=0,ytdR=0;
+ var runs=[],cr=null;
+ for(var q1=0;q1<12;q1++){var D1=dim(y,q1);
+  for(var q2=1;q2<=D1;q2++){
+   if((yr.grids[q1][q2-1]||"В")==="О"){
+    if(!cr){cr={m0:q1,d0:q2,len:0};runs.push(cr);}
+    cr.len++;
+   } else cr=null;
+  }}
+ var vacPay={};
+ runs.forEach(function(r,i){
+  var st=new Date(y,r.m0,r.d0),pd=new Date(st);pd.setDate(pd.getDate()-3);
+  r.gross=r.len*(Number(S.vac.avg)||0)+(i===0?(Number(S.vac.bonus)||0):0);
+  r.payY=pd.getFullYear();r.payM=pd.getMonth();r.payD=pd.getDate();
+  if(r.payY===y)vacPay[r.payM]=(vacPay[r.payM]||0)+r.gross;
+ });
+ for(var m=0;m<12;m++){
+  var D=dim(y,m),tar=S.norma>0?yr.oklads[m]/S.norma:0,nrt=tar*(p.night/100);
+  var hol=HOLIDAYS[m]||[],days=[];
+  var hours=0,nightH=0,holH=0,wd=0,onD=0,mvD=0,b15=0,v15=0,gross=0,vah=0,rksnS=0;
+  for(var d=1;d<=D;d++){
+   var code=yr.grids[m][d-1]||"В",c=CODES[code]||CODES["В"];
+   var op=c.h*tar,hp=hol.indexOf(d)>=0?c.h*tar:0,np=c.n*nrt;
+   var lp=op*(S.lich/100),bt=op+hp+np+lp,bp=op+np,pp=bp*prem;
+   var vp=c.on?p.vahtaDay:0,tp=(c.k==="move")?yr.travels[m]:0;
+   var rs=bt*(rk+sn)+pp*(rk+sn),g=bt*mult+pp*mult+vp+tp;
+   days.push({d:d,code:code,k:c.k,hol:hol.indexOf(d)>=0,gross:g,vahtaPay:vp,h:c.h,n:c.n,net:0});
+   gross+=g;vah+=vp;rksnS+=rs;hours+=c.h;nightH+=c.n;if(hp>0)holH+=c.h;
+   if(c.k==="day"||c.k==="night")wd++;
+   if(c.on)onD++;
+   if(c.k==="move")mvD++;
+   if(d<=15){b15+=op+hp+np;v15+=vp;}
+  }
+  var vacA=vacPay[m]||0,ex=yr.extras[m]||0,acc=gross+ex+vacA,tax=acc-vah;
+  var rB=rksnS+(ex+vacA)*(rk+sn)/mult,mB=tax-rB;
+  function st(a,ad,li){var e=a+ad;
+   return Math.max(0,Math.min(e,li)-a)*(p.ndfl1/100)+Math.max(0,e-Math.max(a,li))*(p.ndfl2/100);}
+  var ndfl=Math.round(st(ytdM,mB,p.limMain)+st(ytdR,rB,p.limRksn));
+  ytdM+=mB;ytdR+=rB;
+  var prof=tax*(p.prof/100),net=acc-ndfl-prof,rate=tax>0?(ndfl+prof)/tax:0;
+  days.forEach(function(x){x.net=x.gross-(x.gross-x.vahtaPay)*rate;});
+  var vacNet=vacA*(1-p.ndfl1/100-p.prof/100);
+  var av=b15*mult*(1-p.ndfl1/100-p.prof/100)*p.avansK+v15;
+  av=Math.min(Math.max(av,0),Math.max(net-vacNet,0));
+  months.push({y:y,m:m,days:days,hours:hours,nightH:nightH,holH:holH,workDays:wd,onDays:onD,
+   moveDays:mvD,extra:ex,accrued:acc,vahta:vah,taxable:tax,ndfl:ndfl,prof:prof,net:net,
+   avans:av,rest:net-av-vacNet,tariff:tar,ytd:ytdM+ytdR,rksnBase:rB,vacA:vacA,vacNet:vacNet});
+ }
+ months.vacRuns=runs;
+ return months;
+}
+function mAt(off){var t=S.start+off,y=S.cur+Math.floor(t/12),m=((t%12)+12)%12;
+ return {y:y,m:m,mm:calcYear(y)[m]};}
+function allMonths(){var a=[];[S.cur-1,S.cur,S.cur+1].forEach(function(y){
+ if(S.years[String(y)])a=a.concat(calcYear(y));});return a;}
+function payments(){
+ var out=[],nk=1-S.p.ndfl1/100-S.p.prof/100;
+ [S.cur-1,S.cur,S.cur+1].forEach(function(y){
+  if(!S.years[String(y)])return;
+  var MM=calcYear(y);
+  MM.forEach(function(mm){
+   if(mm.avans>1)out.push({y:y,m:mm.m,d:29,txt:"Аванс за "+MONTHS[mm.m].toLowerCase(),
+    sub:"за первую половину месяца",sum:mm.avans});
+   if(Math.abs(mm.rest)>1){var nm=(mm.m+1)%12,ny=mm.m===11?y+1:y;
+    out.push({y:ny,m:nm,d:14,txt:"Зарплата за "+MONTHS[mm.m].toLowerCase(),
+     sub:"остаток после аванса",sum:mm.rest});}
+  });
+  (MM.vacRuns||[]).forEach(function(r){
+   if(r.gross>1)out.push({y:r.payY,m:r.payM,d:r.payD,txt:"Отпускные, "+r.len+" дн",
+    sub:"отпуск с "+r.d0+" "+MGEN[r.m0],sum:r.gross*nk});
+  });
+ });
+ out.sort(function(a,b){return (a.y-b.y)||(a.m-b.m)||(a.d-b.d);});
+ return out;
+}
+function periodCalc(){
+ var g=0,n=0,h=0,nh=0,od=0;
+ allMonths().forEach(function(mm){mm.days.forEach(function(x){
+  var k=iso(mm.y,mm.m,x.d);
+  if(k>=S.from&&k<=S.to){g+=x.gross;n+=x.net;h+=x.h;nh+=x.n;if(CODES[x.code].on)od++;}});});
+ var pl=payments().filter(function(q){var k=iso(q.y,q.m,q.d);return k>=S.from&&k<=S.to;});
+ return {gross:g,net:n,hours:h,nightH:nh,onDays:od,shifts:h/12,pays:pl,
+  paySum:pl.reduce(function(s,q){return s+q.sum;},0)};
+}
+
+function render(){
+ var p=S.p,H=[];
+ var win=[mAt(0),mAt(1),mAt(2)];
+ var sy=S.selY||S.cur; Yr(sy);
+ var selRef={y:sy,m:S.sel,mm:calcYear(sy)[S.sel]};
+ var M=selRef.mm;
+ var curMonths=calcYear(S.cur);
+ var yearNet=curMonths.reduce(function(s,m){return s+m.net;},0);
+ var yearTax=curMonths.reduce(function(s,m){return s+m.taxable;},0);
+ var netK=1-p.ndfl1/100-p.prof/100;
+ var vacAvg=S.vac.useYear?(yearTax/12/29.3):S.vac.avg;
+ var vacGross=vacAvg*S.vac.days+(Number(S.vac.bonus)||0);
+ var P=periodCalc();
+ var ylist=Object.keys(S.years).map(Number);
+ if(ylist.indexOf(S.cur)<0)ylist.push(S.cur);
+ if(ylist.indexOf(S.cur+1)<0)ylist.push(S.cur+1);
+ ylist.sort(function(a,b){return a-b;});
+
+ H.push('<header><div class="eyebrow">Вахта \u00B7 инспектор по защи
