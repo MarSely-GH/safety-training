@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B2A33">
+<title>Вахта — сколько придёт и когда</title>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#D6DDE1;color:#131C21}.load{max-width:720px;margin:60px auto;padding:20px}.box{background:#F1F4F6;border:1px solid #AEBAC0;padding:18px}.muted{color:#5D6E77}</style>
+</head>
+<body><div class="load"><div class="box"><b>Вахта — сколько придёт и когда</b><div class="muted">Загрузка…</div></div></div>
+<script>
+(async()=>{
+ try{
+  const names=['part01.htmlpart','part02.htmlpart','part03.htmlpart','part04.htmlpart','part05.htmlpart'];
+  const parts=[];
+  for(const name of names){
+   const r=await fetch(name+'?v=1',{cache:'no-store'});
+   if(!r.ok) throw new Error(name+' '+r.status);
+   parts.push(await r.text());
+  }
+  const html=parts.join('');
+  document.open(); document.write(html); document.close();
+ }catch(e){
+  document.body.innerHTML='<div class="load"><div class="box"><b>Не удалось загрузить приложение</b><div class="muted">'+String(e.message||e)+'</div></div></div>';
+ }
+})();
+</script>
+</body>
+</html>
