@@ -1,0 +1,21 @@
+(el.value===""?0:Number(el.value)):el.value);
+ var i=el.getAttribute("data-i");
+ if(key==="from")S.from=v;
+ else if(key==="to")S.to=v;
+ else if(key==="norma")S.norma=v;
+ else if(key==="lich")S.lich=v;
+ else if(key==="okladAll"){for(var q=0;q<12;q++)yr.oklads[q]=v;}
+ else if(key==="oklad")yr.oklads[+i]=v;
+ else if(key==="extra")yr.extras[+i]=v;
+ else if(key==="travel")yr.travels[+i]=v;
+ else if(key==="p")S.p[el.getAttribute("data-k")]=v;
+ else if(key==="vacDays")S.vac.days=v;
+ else if(key==="vacAvg"){S.vac.avg=v;S.vac.useYear=false;}
+ else if(key==="vacBonus")S.vac.bonus=v;
+ else if(key==="vacUseYear")S.vac.useYear=v;
+ save(); render();
+});
+render();
+</script>
+</body>
+</html>
