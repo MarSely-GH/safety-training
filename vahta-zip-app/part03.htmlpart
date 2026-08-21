@@ -1,0 +1,104 @@
+те имущества</div>'+
+  '<h1>Сколько придёт<br>и когда</h1>'+
+  '<div class="sub">'+S.cur+' год \u00B7 на руки '+rub(yearNet)+' \u00B7 ставка '+nf(M.tariff,2)+' \u20BD/ч</div><div class="years">');
+ ylist.forEach(function(y){H.push('<button class="yr'+(y===S.cur?' on':'')+'" data-act="year" data-y="'+y+'">'+y+'</button>');});
+ H.push('</div></header>');
+ H.push('<section class="okl"><div class="shead"><h2>Оклад</h2><div class="meta">'+nf(M.tariff,2)+' \u20BD/ч \u00B7 '+nf(S.norma,2)+' ч норма</div></div>'+'<input type="number" data-set="okladAll" value="'+Yr(S.cur).oklads[selRef.m]+'">'+'<p class="note">Ставится сразу на все месяцы '+S.cur+' года — так считают за товарища или за себя на следующий год. Если оклад менялся в середине года, поправьте отдельные месяцы в панели \u00ABОклады и доплаты\u00BB внизу.</p></section>');
+
+ /* ── выплаты по видимым месяцам ── */
+ H.push('<section><div class="shead"><h2>Выплаты</h2><div class="meta">по трём месяцам ниже</div></div>');
+ var rows=[],winKeys={};
+ win.forEach(function(w){
+  var mm=w.mm; winKeys[w.y+"-"+w.m]=1;
+  if(mm.avans>1)rows.push({d:29,m:w.m,y:w.y,txt:"Аванс за "+MONTHS[w.m].toLowerCase(),
+   sub:"за первую половину месяца",sum:mm.avans});
+  if(Math.abs(mm.rest)>1){var nm=(w.m+1)%12,ny=w.m===11?w.y+1:w.y;
+   rows.push({d:14,m:nm,y:ny,txt:"Зарплата за "+MONTHS[w.m].toLowerCase(),
+    sub:"остаток после аванса",sum:mm.rest});}
+ });
+ [S.cur-1,S.cur,S.cur+1].forEach(function(y){
+  if(!S.years[String(y)])return;
+  (calcYear(y).vacRuns||[]).forEach(function(r){
+   if(r.gross>1&&winKeys[r.payY+"-"+r.payM])rows.push({d:r.payD,m:r.payM,y:r.payY,
+    txt:"Отпускные, "+r.len+" дн",sub:"отпуск с "+r.d0+" "+MGEN[r.m0],sum:r.gross*netK});});
+ });
+ rows.sort(function(a,b){return (a.y-b.y)||(a.m-b.m)||(a.d-b.d);});
+ if(!rows.length)H.push('<p class="note" style="margin:0">В этих месяцах смен нет \u2014 выплат не будет.</p>');
+ rows.forEach(function(r){
+  H.push('<div class="pay"><span class="when">'+r.d+' '+MSHORT[r.m]+(r.y!==S.cur?" "+r.y:"")+'</span>'+
+   '<span class="what">'+esc(r.txt)+'<small>'+esc(r.sub)+'</small></span>'+
+   '<span class="sum">'+rub(r.sum)+'<small>по '+rub(r.sum/2)+' на банк</small></span></div>');});
+ var tot=rows.reduce(function(s,r){return s+r.sum;},0);
+ if(rows.length)H.push('<div class="tot"><span>Всего за три месяца</span><span class="v">'+rub(tot)+'</span></div>');
+ H.push('</section>');
+
+ /* ── график, три месяца ── */
+ H.push('<section><div class="shead"><h2>График</h2><div class="nav">'+
+  '<button data-act="shift" data-n="-1">\u2039</button>'+
+  '<button data-act="shift" data-n="1">\u203A</button></div></div>');
+ H.push('<div class="brush">');
+ PICKER.forEach(function(c){H.push('<button class="br k-'+CODES[c].k+(S.brush===c?' on':'')+
+  '" data-act="brush" data-code="'+c+'" title="'+esc(CODES[c].t)+'">'+c+'</button>');});
+ H.push('<button class="tgl'+(S.drag?' on':'')+'" data-act="dragtog">'+
+  (S.drag?'\u2713 протяжка':'протяжка')+'</button>'+
+  '<button class="tgl" data-act="undo"'+(undo.length?'':' style="opacity:.4"')+'>\u21B6 отменить</button></div>');
+ win.forEach(function(w){
+  var mm=w.mm,D=dim(w.y,w.m);
+  H.push('<div class="mblock"><div class="mtitle'+(w.m===selRef.m&&w.y===selRef.y?' on':'')+'" data-act="selm" data-m="'+w.m+'" data-y="'+w.y+'">'+
+   '<span class="nm">'+MONTHS[w.m]+' '+w.y+'</span>'+
+   '<span class="st">'+nf(mm.hours)+' ч \u00B7 '+nf(mm.nightH)+' ноч \u00B7 '+nf(mm.onDays)+' дн \u00B7 '+
+   (mm.net>0?rub(mm.net):"\u2014")+'</span></div><div class="days'+(S.drag?' dragon':'')+'">');
+  for(var d=1;d<=D;d++){var x=mm.days[d-1];
+   H.push('<div class="cell k-'+x.k+'" data-paint="1" data-y="'+w.y+'" data-m="'+w.m+'" data-d="'+d+
+    '" title="'+esc(CODES[x.code].t)+'"><span class="n">'+d+(x.hol?'\u2022':'')+'</span>'+
+    '<span class="c">'+x.code+'</span></div>');}
+  H.push('</div></div>');
+ });
+ H.push('<p class="note">Выберите код сверху и коротко нажмите на день. Проведёте пальцем — страница просто прокрутится, ничего не перекрасится. Чтобы заливать сразу полосу, включите \u00ABпротяжку\u00BB. Кнопка \u00ABотменить\u00BB возвращает последнее изменение. '+
+  'Точка у числа — нерабочий праздничный день, двойная оплата считается автоматически. '+
+  '\u00ABВв\u00BB — выходной внутри вахты: часов нет, вахтовая надбавка идёт. Стрелки листают окно на месяц. Все дни начинаются с \u00ABВ\u00BB \u2014 закрашивайте только те месяцы, которые вам нужны.</p></section>');
+
+ /* ── период ── */
+ H.push('<section><div class="shead"><h2>Произвольный период</h2></div><div class="grid2">'+
+  '<label class="f"><span>С</span><input type="date" data-set="from" value="'+S.from+'"></label>'+
+  '<label class="f"><span>По</span><input type="date" data-set="to" value="'+S.to+'"></label></div>'+
+  '<div class="chips">'+
+   '<button class="chip" data-act="q" data-q="cur">Текущая вахта</button>'+
+   '<button class="chip" data-act="q" data-q="next">Следующая вахта</button>'+
+   '<button class="chip" data-act="q" data-q="win">Эти три месяца</button>'+
+   '<button class="chip" data-act="q" data-q="year">Весь год</button></div>'+
+  '<div class="card dark"><div class="lab">Заработано за смены</div><div class="big">'+rub(P.net)+
+     '</div><div class="note">начислено '+rub(P.gross)+'</div></div>'+
+  '<div class="stats"><span>'+nf(P.shifts,1)+' смен по 12 ч</span><span>'+nf(P.hours)+' ч</span>'+
+   '<span>'+nf(P.nightH)+' ночных ч</span><span>'+nf(P.onDays)+' дней на вахте</span>'+
+   (P.shifts>0?'<span>\u2248 '+rub(P.net/P.shifts)+' за смену</span>':'')+'</div></section>');
+
+ /* ── расчётка ── */
+ H.push('<section><div class="shead"><h2>Листок \u00B7 '+MONTHS[selRef.m]+' '+selRef.y+'</h2>'+
+  '<div class="nav"><button data-act="selshift" data-n="-1">\u2039</button>'+
+  '<button data-act="selshift" data-n="1">\u203A</button></div></div>');
+ [["0020","Оплата по окладу",nf(M.hours)+" ч"],
+  ["1030","Выходные / праздничные",nf(M.holH)+" ч"],
+  ["1100","Доплата за ночное время",nf(M.nightH)+" ч"],
+  ["2205","Надбавка за вахтовый метод",nf(M.onDays)+" дн"],
+  ["1189","Оплата времени в пути",nf(M.moveDays)+" дн"]].forEach(function(r){
+  H.push('<div class="line"><span class="code">'+r[0]+'</span><span class="nm">'+r[1]+'</span><span class="qt">'+r[2]+'</span></div>');});
+ H.push('<div class="line"><span class="code">4000</span><span class="nm">Отпускные</span><span class="qt">'+rub(M.vacA)+'</span></div>'+
+  '<div class="line"><span class="code"></span><span class="nm">Прочие начисления \u2014 премии, вознаграждение</span><span class="qt">'+rub(M.extra)+'</span></div>'+
+  '<div class="tot"><span>Всего начислено</span><span class="v">'+rub(M.accrued)+'</span></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--soft);padding:3px 0">'+
+  '<span>НДФЛ \u00B7 профсоюз</span><span style="font-family:var(--mono)">\u2212'+nf(M.ndfl)+' \u00B7 \u2212'+nf(M.prof)+'</span></div>'+
+  '<div class="big-out out-dark"><span class="lab">На руки</span><span class="v">'+rub(M.net)+'</span></div>'+
+  '<p class="note">Доход с начала года \u2014 '+rub(M.ytd)+'. Северная часть ('+rub(M.rksnBase)+
+  ' за месяц) идёт в отдельную налоговую базу с порогом '+rub(p.limRksn)+', остальное \u2014 с порогом '+rub(p.limMain)+'.</p></section>');
+
+ /* ── год ── */
+ H.push('<section><div class="shead"><h2>Весь '+S.cur+' год</h2></div><div style="overflow-x:auto"><table>'+
+  '<thead><tr><th class="l">Мес</th><th>Часы</th><th>Начислено</th><th>На руки</th><th>29-го</th><th>14-го</th></tr></thead><tbody>');
+ curMonths.forEach(function(mm){
+  H.push('<tr class="click'+(mm.m===selRef.m&&selRef.y===S.cur?' on':'')+'" data-act="jump" data-m="'+mm.m+'">'+
+   '<td class="l mon">'+MSHORT[mm.m]+'</td><td>'+(mm.hours||"\u2014")+'</td>'+
+   '<td>'+(mm.accrued>0?nf(mm.accrued):"\u2014")+'</td><td class="b">'+(mm.net>0?nf(mm.net):"\u2014")+'</td>'+
+   '<td class="s">'+(mm.avans>1?nf(mm.avans):"\u2014")+'</td>'+
+   '<td class="s">'+(Math.abs(mm.rest)>1?nf(mm.rest):"\u2014")+'</td></tr>');});
+ H.push('</tbody
