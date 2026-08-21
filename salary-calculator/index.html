@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#246bfd">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Вахта — зарплата</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f4f6f8;color:#18212b}.loader{max-width:720px;margin:50px auto;padding:24px}.box{background:#fff;border:1px solid #dfe5eb;border-radius:18px;padding:22px}.muted{color:#66717f}
+</style>
+</head>
+<body>
+<div class="loader" id="loader"><div class="box"><h2>Калькулятор зарплаты</h2><p class="muted">Загружаю последнюю версию…</p></div></div>
+<script>
+(async()=>{
+  const base='https://raw.githubusercontent.com/MarSely-GH/my-first-project/main/';
+  try{
+    const [html,css,core,voice]=await Promise.all([
+      fetch(base+'index.html?'+Date.now()).then(r=>{if(!r.ok)throw new Error('index');return r.text()}),
+      fetch(base+'styles.css?'+Date.now()).then(r=>{if(!r.ok)throw new Error('styles');return r.text()}),
+      fetch(base+'core.js?'+Date.now()).then(r=>{if(!r.ok)throw new Error('core');return r.text()}),
+      fetch(base+'voice.js?'+Date.now()).then(r=>{if(!r.ok)throw new Error('voice');return r.text()})
+    ]);
+    let page=html
+      .replace('<link rel="stylesheet" href="styles.css">','<style>'+css+'</style>')
+      .replace('<script src="core.js" defer></script>','<script>'+core+'<\/script>')
+      .replace('<script src="voice.js" defer></script>','<script>'+voice+'<\/script>')
+      .replace('<link rel="manifest" href="manifest.webmanifest">','<link rel="manifest" href="manifest.webmanifest">')
+      .replace('<link rel="icon" href="icon.svg" type="image/svg+xml">','<link rel="icon" href="icon.svg" type="image/svg+xml">');
+    page=page.replace('</body>','<script>if(\'serviceWorker\' in navigator){navigator.serviceWorker.register(\'./service-worker.js\').catch(()=>{});}<\/script></body>');
+    document.open();document.write(page);document.close();
+  }catch(e){
+    document.getElementById('loader').innerHTML='<div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу через несколько секунд.</p></div>';
+  }
+})();
+</script>
+</body>
+</html>
