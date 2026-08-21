@@ -2,137 +2,32 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#246bfd">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Вахта — зарплата</title>
-<style>
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f4f6f8;color:#18212b}.loader{max-width:720px;margin:50px auto;padding:24px}.box{background:#fff;border:1px solid #dfe5eb;border-radius:18px;padding:22px}.muted{color:#66717f}
-</style>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f4f6f8;color:#18212b}.loader{max-width:720px;margin:50px auto;padding:24px}.box{background:#fff;border:1px solid #dfe5eb;border-radius:18px;padding:22px}.muted{color:#66717f}</style>
 </head>
 <body>
-<div class="loader" id="loader"><div class="box"><h2>Калькулятор зарплаты</h2><p class="muted">Загружаю последнюю версию…</p></div></div>
+<div class="loader"><div class="box"><h2>Вахта — зарплата</h2><p class="muted">Загружаю калькулятор…</p></div></div>
 <script>
 (async()=>{
   const base='https://raw.githubusercontent.com/MarSely-GH/my-first-project/main/';
   try{
     const bust='?v='+Date.now();
-    const [htmlText,css,core,voice]=await Promise.all([
+    const [htmlText,css,core]=await Promise.all([
       fetch(base+'index.html'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('index '+r.status);return r.text()}),
       fetch(base+'styles.css'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('styles '+r.status);return r.text()}),
-      fetch(base+'core.js'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('core '+r.status);return r.text()}),
-      fetch(base+'voice.js'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('voice '+r.status);return r.text()})
+      fetch(base+'core.js'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('core '+r.status);return r.text()})
     ]);
-
     const parsed=new DOMParser().parseFromString(htmlText,'text/html');
-    document.title=parsed.title || 'Вахта — зарплата';
-
-    const style=document.createElement('style');
-    style.textContent=css;
-    document.head.appendChild(style);
-
+    document.title=parsed.title||'Вахта — зарплата';
+    const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
     document.body.innerHTML=parsed.body.innerHTML;
-
-    // Основной код калькулятора.
-    (0,eval)(core+'\n'+voice);
-
-    // Голосовой ввод по той же схеме, что в АвтоПоиске.
-    // В АвтоПоиске continuous=false, поэтому браузер не повторяет один и тот же фрагмент несколько раз.
-    (function setupVoiceLikeAutopoisk(){
-      const oldBtn=document.getElementById('voiceBtn');
-      const oldStop=document.getElementById('voiceStopBtn');
-      const input=document.getElementById('voiceText');
-      const status=document.getElementById('voiceStatus');
-      if(!oldBtn||!input||!status)return;
-
-      // Убираем старые обработчики голоса, которые были загружены из voice.js.
-      const btn=oldBtn.cloneNode(true);
-      oldBtn.parentNode.replaceChild(btn,oldBtn);
-      let stop=null;
-      if(oldStop){
-        stop=oldStop.cloneNode(true);
-        oldStop.parentNode.replaceChild(stop,oldStop);
-      }
-
-      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-      if(!SR){
-        btn.onclick=function(){
-          status.innerHTML='<div class="warning">Голосовой ввод не поддерживается этим браузером. Можно использовать микрофон клавиатуры, затем нажать «Разобрать текст».</div>';
-          input.focus();
-        };
-        return;
-      }
-
-      const rec=new SR();
-      let listening=false;
-      let finalText='';
-      rec.lang='ru-RU';
-      rec.interimResults=true;
-      rec.continuous=false;
-      rec.maxAlternatives=1;
-
-      rec.onstart=function(){
-        listening=true;
-        finalText='';
-        input.value='';
-        btn.disabled=true;
-        if(stop)stop.disabled=false;
-        status.innerHTML='<div class="ok">Слушаю… говорите обычной речью.</div>';
-      };
-
-      rec.onresult=function(e){
-        let interim='';
-        for(let i=e.resultIndex;i<e.results.length;i++){
-          const t=e.results[i][0].transcript;
-          if(e.results[i].isFinal) finalText+=t+' ';
-          else interim+=t;
-        }
-        input.value=(finalText+interim).trim();
-      };
-
-      rec.onerror=function(e){
-        listening=false;
-        btn.disabled=false;
-        if(stop)stop.disabled=true;
-        if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-          status.innerHTML='<div class="error">Нет доступа к микрофону. Разрешите микрофон для этого сайта.</div>';
-        }else if(e.error==='no-speech'){
-          status.innerHTML='<div class="error">Речь не распознана. Нажмите микрофон и повторите.</div>';
-        }else{
-          status.innerHTML='<div class="error">Не удалось выполнить голосовой ввод.</div>';
-        }
-      };
-
-      rec.onend=function(){
-        listening=false;
-        btn.disabled=false;
-        if(stop)stop.disabled=true;
-        if(input.value.trim()){
-          try{ applyVoiceText(); }
-          catch(err){
-            status.innerHTML='<div class="error">Речь распознана, но не удалось разобрать данные. Можно поправить текст и нажать «Разобрать текст».</div>';
-          }
-        }
-      };
-
-      btn.onclick=function(){
-        try{
-          if(listening)rec.stop();
-          else rec.start();
-        }catch(e){}
-      };
-      if(stop){
-        stop.onclick=function(){ if(listening)rec.stop(); };
-      }
-    })();
-
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
-    }
+    (0,eval)(core);
   }catch(e){
-    console.error(e);
-    document.body.innerHTML='<div class="loader"><div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу. Если не поможет — откройте ссылку в новой вкладке.</p><p class="muted" style="font-size:12px">'+String(e.message||e)+'</p></div></div>';
+    document.body.innerHTML='<div class="loader"><div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу.</p><p class="muted" style="font-size:12px">'+String(e.message||e)+'</p></div></div>';
   }
 })();
 </script>
