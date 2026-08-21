@@ -1,40 +1,150 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#246bfd">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<link rel="manifest" href="manifest.webmanifest?v=20260821-1336">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Вахта ЗП">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Вахта — зарплата</title>
-<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f4f6f8;color:#18212b}.loader{max-width:720px;margin:50px auto;padding:24px}.box{background:#fff;border:1px solid #dfe5eb;border-radius:18px;padding:22px}.muted{color:#66717f}</style>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--line:#d9e1ea;--text:#142033;--muted:#738093;--blue:#246bfd;--green:#158c57;--soft:#f6f8fb}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:760px;margin:auto;padding:12px 12px 40px}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin:0 0 12px;box-shadow:0 5px 18px rgba(24,39,75,.05)}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:20px;margin:0}.muted,.note,small,label{color:var(--muted)}.hero{padding:8px 4px 10px}
+.grid3{display:grid;grid-template-columns:1.2fr .78fr 1fr;gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:13px;margin-bottom:5px}input,select{width:100%;font:inherit;font-size:18px;padding:12px 13px;border:1px solid #cbd5df;border-radius:15px;background:#fff;color:var(--text);min-width:0}
+.periodHead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.09em;color:var(--blue)}.green{color:var(--green)}.money{font-size:24px;font-weight:850;white-space:nowrap}
+.big{position:relative;background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:11px 12px}.big label{margin:0 0 4px}.big input{font-size:28px;font-weight:800;border:0;background:transparent;padding:2px 30px 2px 0}.unit{position:absolute;right:13px;bottom:14px;color:var(--muted)}
+.note{font-size:13px;line-height:1.45;background:var(--soft);padding:10px 12px;border-radius:14px;margin-top:10px}
+details{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}summary{font-weight:750;cursor:pointer}.inside{margin-top:10px}
+.resultGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.result{border:1px solid var(--line);border-radius:18px;padding:13px;background:#fafbfd}.result.blue{background:#eef4ff}.result.greenbg{background:#eefaf4}.result.total{grid-column:1/-1}.result span,.result small{display:block}.result strong{display:block;font-size:25px;margin:4px 0}
+.summary{font-size:13px;line-height:1.5;background:var(--soft);border-radius:14px;padding:11px;margin-top:10px}
+.switch{display:flex;align-items:center;gap:10px}.switch input{width:24px;height:24px}.hidden{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:7px 5px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+button{border:0;border-radius:14px;padding:11px 14px;font-weight:700}.soft{background:#eef2f7}
+@media(max-width:560px){.wrap{padding:8px 8px 28px}.card{padding:13px;border-radius:18px}.grid3{grid-template-columns:1.15fr .75fr .95fr;gap:7px}input,select{font-size:16px;padding:10px}.money{font-size:21px}.big input{font-size:25px}.result strong{font-size:22px}.note{padding:9px 10px}.hero{display:none}}
+</style>
 </head>
 <body>
-<div class="loader"><div class="box"><h2>Вахта — зарплата</h2><p class="muted">Загружаю калькулятор…</p></div></div>
+<div class="wrap">
+  <div class="hero"><h1>Вахта — зарплата</h1><div class="muted">Введите дневные и ночные часы. Ночную доплату программа переведёт сама.</div></div>
+
+  <section class="card">
+    <h2 style="margin-bottom:10px">1. Месяц и оклад</h2>
+    <div class="grid3">
+      <div><label>Месяц</label><select id="month">
+        <option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option><option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option><option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option><option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>
+      </select></div>
+      <div><label>Год</label><input id="year" type="number" value="2027"></div>
+      <div><label>Оклад, ₽</label><input id="salary" type="number" value="49000"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="periodHead">
+      <div><div class="eyebrow">АВАНС 29-ГО</div><h2>2. С 1 по 15</h2></div>
+      <div class="money" id="advanceTop">0 ₽</div>
+    </div>
+    <div class="grid2">
+      <div class="big"><label>Дневные часы</label><input id="day1" type="number" inputmode="decimal" min="0" value="0"><span class="unit">ч</span></div>
+      <div class="big"><label>Ночные часы</label><input id="night1" type="number" inputmode="decimal" min="0" value="0"><span class="unit">ч</span></div>
+    </div>
+    <div class="note">Ночные — это <b>фактическая длина ночных смен</b>. Например 12н + 12н + 4н = <b>28 ч</b>. Для доплаты программа сама переведёт их в 8 + 8 + 2 = <b>18 ночных часов</b>.</div>
+    <details><summary>Дополнительно для 1–15</summary>
+      <div class="grid3 inside">
+        <div><label>Праздничные часы</label><input id="holiday1" type="number" value="0"></div>
+        <div><label>Дней в пути</label><input id="travel1" type="number" value="0"></div>
+        <div><label>Дней вахты</label><input id="vakh1" type="number" placeholder="авто"></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="periodHead">
+      <div><div class="eyebrow green">ЗАРПЛАТА 14-ГО</div><h2>3. <span id="secondLabel">С 16 по 31</span></h2></div>
+      <div class="money green" id="salaryTop">0 ₽</div>
+    </div>
+    <div class="grid2">
+      <div class="big"><label>Дневные часы</label><input id="day2" type="number" inputmode="decimal" min="0" value="0"><span class="unit">ч</span></div>
+      <div class="big"><label>Ночные часы</label><input id="night2" type="number" inputmode="decimal" min="0" value="0"><span class="unit">ч</span></div>
+    </div>
+    <div class="note">Общие рабочие часы = дневные + ночные. К выплате 14-го добавляются месячная премия 45% и РК/СН на неё.</div>
+    <details><summary>Дополнительно за вторую половину</summary>
+      <div class="grid3 inside">
+        <div><label>Праздничные часы</label><input id="holiday2" type="number" value="0"></div>
+        <div><label>Дней в пути</label><input id="travel2" type="number" value="0"></div>
+        <div><label>Дней вахты</label><input id="vakh2" type="number" placeholder="авто"></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <label class="switch"><input id="hasVacation" type="checkbox"><span><b>В этом месяце есть отпуск</b><br><small>Откроется отдельный блок отпускных</small></span></label>
+    <div id="vacationBox" class="hidden" style="margin-top:12px">
+      <div class="grid2">
+        <div><label>Дней отпуска</label><input id="vacDays" type="number" value="0"></div>
+        <div><label>Отпускные на руки, ₽</label><input id="vacNet" type="number" value="0"></div>
+      </div>
+      <div class="note">Пока отпускные вводятся отдельной суммой. Автоматический расчёт отпускных добавим отдельно.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 style="margin-bottom:10px">4. Сколько получите</h2>
+    <div class="resultGrid">
+      <div class="result blue"><span>29-го</span><strong id="advanceOut">0 ₽</strong><small>за 1–15</small></div>
+      <div class="result greenbg"><span>14-го</span><strong class="green" id="finalOut">0 ₽</strong><small id="finalCaption">за 16–31 + премия</small></div>
+      <div class="result hidden" id="vacResult"><span>Отпускные</span><strong id="vacOut">0 ₽</strong></div>
+      <div class="result total"><span>Всего за месяц</span><strong id="netOut">0 ₽</strong></div>
+    </div>
+    <div class="summary" id="summary"></div>
+    <details><summary>Подробный расклад</summary>
+      <div style="overflow:auto;margin-top:8px"><table><thead><tr><th>Начисление</th><th>1–15</th><th id="thSecond">16–31</th></tr></thead><tbody id="breakdown"></tbody></table></div>
+    </details>
+  </section>
+
+  <section class="card">
+    <details><summary>Настройки формул</summary>
+      <div class="grid3 inside">
+        <div><label>Норма часов</label><input id="norm" type="number" step=".01" value="164.33"></div>
+        <div><label>РК, %</label><input id="rkPct" type="number" value="80"></div>
+        <div><label>СН, %</label><input id="snPct" type="number" value="80"></div>
+        <div><label>Ночные, %</label><input id="nightPct" type="number" value="35"></div>
+        <div><label>Премия, %</label><input id="premiumPct" type="number" value="45"></div>
+        <div><label>Вахтовая, ₽/день</label><input id="vakhDay" type="number" value="287"></div>
+        <div><label>Профсоюз, %</label><input id="unionPct" type="number" step=".1" value="1"></div>
+        <div><label>НДФЛ, %</label><input id="taxPct" type="number" step=".1" value="13"></div>
+        <div><label>Налоговый вычет, ₽</label><input id="taxDeduction" type="number" value="0"></div>
+        <div><label>Оплата дня в пути, ₽</label><input id="travelDay" type="number" value="0"></div>
+        <div><label>Доп. начисления 14-го, ₽</label><input id="extraGross" type="number" value="0"></div>
+      </div>
+      <button class="soft" id="resetBtn" type="button" style="margin-top:10px">Сбросить часы</button>
+    </details>
+  </section>
+</div>
+
 <script>
-(async()=>{
-  const release='20260821-1336';
-  const base='https://raw.githubusercontent.com/MarSely-GH/my-first-project/main/';
-  try{
-    if(!location.search.includes('v=')) history.replaceState(null,'','?v='+release);
-    const bust='?v='+Date.now();
-    const [htmlText,css,core]=await Promise.all([
-      fetch(base+'index.html'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('index '+r.status);return r.text()}),
-      fetch(base+'styles.css'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('styles '+r.status);return r.text()}),
-      fetch(base+'core.js'+bust,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('core '+r.status);return r.text()})
-    ]);
-    const parsed=new DOMParser().parseFromString(htmlText,'text/html');
-    document.title=parsed.title||'Вахта — зарплата';
-    const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
-    document.body.innerHTML=parsed.body.innerHTML;
-    (0,eval)(core);
-  }catch(e){
-    document.body.innerHTML='<div class="loader"><div class="box"><h2>Не удалось загрузить калькулятор</h2><p class="muted">Обновите страницу.</p><p class="muted" style="font-size:12px">'+String(e.message||e)+'</p></div></div>';
-  }
-})();
+const $=id=>document.getElementById(id);
+const n=id=>parseFloat($(id)?.value)||0;
+const r2=v=>Math.round((Number(v)||0)*100)/100;
+const money=v=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2}).format(Number(v)||0);
+function daysInMonth(){return new Date(parseInt($('year').value)||2027,parseInt($('month').value)||1,0).getDate()}
+function nightPremiumHours(actual){let h=Math.max(0,Number(actual)||0),p=0;const tw=Math.floor(h/12);p+=tw*8;h-=tw*12;if(h>=8){p+=6;h-=8}if(h>=4){p+=2;h-=4}if(h>0)p+=h*(2/3);return r2(p)}
+function cfg(){return{salary:n('salary'),norm:n('norm'),rk:n('rkPct')/100,sn:n('snPct')/100,nightPct:n('nightPct')/100,premiumPct:n('premiumPct')/100,vakhDay:n('vakhDay'),unionPct:n('unionPct')/100,taxPct:n('taxPct')/100,taxDeduction:n('taxDeduction'),travelDay:n('travelDay'),extraGross:n('extraGross')}}
+function period(i,c){const day=Math.max(0,n('day'+i)),nightActual=Math.max(0,n('night'+i));const total=r2(day+nightActual),nightCalc=nightPremiumHours(nightActual);const holiday=Math.max(0,n('holiday'+i)),travelDays=Math.max(0,n('travel'+i));const ve=$('vakh'+i),autoV=Math.max(0,Math.ceil(total/12)+travelDays);const vakhDays=(!ve||ve.value.trim()==='')?autoV:Math.max(0,parseFloat(ve.value)||0);const rate=c.norm>0?c.salary/c.norm:0;const base=r2(rate*total),nightPay=r2(rate*nightCalc*c.nightPct),holidayPay=r2(rate*holiday);const coeff=r2(base+nightPay+holidayPay),rk=r2(coeff*c.rk),sn=r2(coeff*c.sn);const travelRate=c.travelDay>0?c.travelDay:0;const travel=r2(travelDays*travelRate),vakh=r2(vakhDays*c.vakhDay);const gross=r2(base+nightPay+holidayPay+rk+sn+travel+vakh);return{day,nightActual,total,nightCalc,holiday,travelDays,vakhDays,rate,base,nightPay,holidayPay,rk,sn,travel,vakh,gross}}
+function deduct(gross,vakh,c,available){const unionBase=Math.max(0,r2(gross-vakh)),union=r2(unionBase*c.unionPct);const used=Math.min(Math.max(0,available),unionBase),taxable=Math.max(0,r2(unionBase-used));const tax=Math.round(taxable*c.taxPct),net=r2(gross-union-tax);return{union,tax,net,remaining:Math.max(0,r2(available-used))}}
+function labels(){const last=daysInMonth();$('secondLabel').textContent=`С 16 по ${last}`;$('finalCaption').textContent=`за 16–${last} + премия`;$('thSecond').textContent=`16–${last}`}
+function calc(){labels();const c=cfg();if(c.salary<=0||c.norm<=0)return;const p1=period(1,c),p2=period(2,c);const premBase=r2(p1.base+p2.base+p1.nightPay+p2.nightPay);const prem=r2(premBase*c.premiumPct),rkp=r2(prem*c.rk),snp=r2(prem*c.sn),premGross=r2(prem+rkp+snp);const g1=p1.gross,g2=r2(p2.gross+premGross+c.extraGross);const d1=deduct(g1,p1.vakh,c,c.taxDeduction),d2=deduct(g2,p2.vakh,c,d1.remaining);const vacOn=$('hasVacation').checked,vac=vacOn?n('vacNet'):0;const adv=Math.max(0,d1.net),fin=Math.max(0,d2.net),total=r2(adv+fin+vac);$('advanceTop').textContent=money(adv);$('salaryTop').textContent=money(fin);$('advanceOut').textContent=money(adv);$('finalOut').textContent=money(fin);$('vacOut').textContent=money(vac);$('netOut').textContent=money(total);$('vacResult').classList.toggle('hidden',!vacOn);const last=daysInMonth();$('summary').innerHTML=`1–15: <b>${p1.day} дневных + ${p1.nightActual} ночных = ${p1.total} рабочих ч</b>, ночных для доплаты <b>${p1.nightCalc} ч</b>.<br>16–${last}: <b>${p2.day} + ${p2.nightActual} = ${p2.total} рабочих ч</b>, ночных для доплаты <b>${p2.nightCalc} ч</b>.`;const rows=[['Рабочие часы',p1.total,p2.total,false],['Ночные смены, ч',p1.nightActual,p2.nightActual,false],['Ночные для доплаты',p1.nightCalc,p2.nightCalc,false],['Оплата по окладу',p1.base,p2.base,true],['Доплата за ночные',p1.nightPay,p2.nightPay,true],['Праздничные',p1.holidayPay,p2.holidayPay,true],['РК',p1.rk,p2.rk,true],['СН',p1.sn,p2.sn,true],['Вахтовая',p1.vakh,p2.vakh,true],['Время в пути',p1.travel,p2.travel,true],['Премия + РК/СН',0,premGross,true],['Доп. начисления',0,c.extraGross,true],['Профсоюз',-d1.union,-d2.union,true],['НДФЛ',-d1.tax,-d2.tax,true],['Чистыми',adv,fin,true]];$('breakdown').innerHTML=rows.map(x=>`<tr><td>${x[0]}</td><td>${x[3]?money(x[1]):x[1]}</td><td>${x[3]?money(x[2]):x[2]}</td></tr>`).join('');save()}
+const ids=['month','year','salary','day1','night1','holiday1','travel1','vakh1','day2','night2','holiday2','travel2','vakh2','hasVacation','vacDays','vacNet','norm','rkPct','snPct','nightPct','premiumPct','vakhDay','unionPct','taxPct','taxDeduction','travelDay','extraGross'];
+function save(){const d={};ids.forEach(id=>{const e=$(id);if(e)d[id]=e.type==='checkbox'?e.checked:e.value});try{localStorage.setItem('vakhtaSalaryV5',JSON.stringify(d))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem('vakhtaSalaryV5')||'{}');Object.entries(d).forEach(([id,v])=>{const e=$(id);if(e)e.type==='checkbox'?e.checked=!!v:e.value=v})}catch(e){}}
+function toggleVac(){$('vacationBox').classList.toggle('hidden',!$('hasVacation').checked)}
+function resetHours(){['day1','night1','holiday1','travel1','day2','night2','holiday2','travel2','vacDays','vacNet','extraGross'].forEach(id=>$(id).value=0);$('vakh1').value='';$('vakh2').value='';$('hasVacation').checked=false;toggleVac();calc()}
+load();toggleVac();document.addEventListener('input',e=>{if(e.target.matches('input,select'))calc()});document.addEventListener('change',e=>{if(e.target.id==='hasVacation')toggleVac();if(e.target.matches('input,select'))calc()});$('resetBtn').addEventListener('click',resetHours);calc();
+if('serviceWorker'in navigator){navigator.serviceWorker.register('./service-worker.js').catch(()=>{})}
 </script>
-</body>
-</html>
+</body></html>
