@@ -14,11 +14,12 @@
   const names=['part01.htmlpart','part02.htmlpart','part03.htmlpart','part04.htmlpart','part05.htmlpart'];
   const parts=[];
   for(const name of names){
-   const r=await fetch(name+'?v=1',{cache:'no-store'});
+   const r=await fetch(name+'?v=2',{cache:'no-store'});
    if(!r.ok) throw new Error(name+' '+r.status);
    parts.push(await r.text());
   }
-  const html=parts.join('');
+  let html=parts.join('');
+  html=html.replace('</body>','<script src="group-payments.js?v=2"><\\/script></body>');
   document.open(); document.write(html); document.close();
  }catch(e){
   document.body.innerHTML='<div class="load"><div class="box"><b>Не удалось загрузить приложение</b><div class="muted">'+String(e.message||e)+'</div></div></div>';
