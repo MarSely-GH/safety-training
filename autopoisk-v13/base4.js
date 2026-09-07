@@ -6,6 +6,13 @@ var AUTOPOISK_OFFICIAL_UPDATE_20260829=[
 ];
 window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat(AUTOPOISK_OFFICIAL_UPDATE_20260829);
 
+var AUTOPOISK_OFFICIAL_UPDATE_20260907=[
+  {"model":"RENAULT DUSTER","plate":"Х756ЕМ72","org":"ООО «РАСТАМ-Экология»","validTo":"2026-09-30"},
+  {"model":"LADA GRANTA","plate":"Р419УР154","org":"ООО «Промстроймонтаж»","validTo":"2026-09-30"},
+  {"model":"ГАЗ ГАЗЕЛЬ БИЗНЕС","plate":"Р381УО154","org":"ООО «Промстроймонтаж»","validTo":"2026-09-30"}
+];
+window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat(AUTOPOISK_OFFICIAL_UPDATE_20260907);
+
 (function mergeOfficialUpdateIntoSavedBase(){
   try{
     var key="avtopoisk_chrome_v12";
@@ -22,8 +29,9 @@ window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat(AUTOPOI
     var existing={};
     for(var i=0;i<data.length;i++)existing[normPlateLocal(data[i]&&data[i].plate)]=i;
     var changed=false;
-    for(var j=0;j<AUTOPOISK_OFFICIAL_UPDATE_20260829.length;j++){
-      var car=AUTOPOISK_OFFICIAL_UPDATE_20260829[j];
+    var officialUpdates=AUTOPOISK_OFFICIAL_UPDATE_20260829.concat(AUTOPOISK_OFFICIAL_UPDATE_20260907);
+    for(var j=0;j<officialUpdates.length;j++){
+      var car=officialUpdates[j];
       var p=normPlateLocal(car.plate);
       if(Object.prototype.hasOwnProperty.call(existing,p)){
         var idx=existing[p];
