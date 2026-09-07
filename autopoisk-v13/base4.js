@@ -2,7 +2,7 @@ window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat([{"mode
 
 var AUTOPOISK_OFFICIAL_UPDATE_20260829=[
   {"model":"JAC T6","plate":"С958ХМ89","org":"ООО «ФАЗА»","validTo":"2026-09-15"},
-  {"model":"17364-0000010-12","plate":"Н627НР196","org":"ООО «Объединенные кондитеры» (собственник ООО «Стрела»)","validTo":"2026-09-13"}
+  {"model":"LADA GRANTA","plate":"Н627НР196","org":"ООО «Объединенные кондитеры» (собственник ООО «Стрела»)","validTo":"2026-09-13"}
 ];
 window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat(AUTOPOISK_OFFICIAL_UPDATE_20260829);
 
@@ -20,12 +20,20 @@ window.AUTOPOISK_INITIAL_DATA=(window.AUTOPOISK_INITIAL_DATA||[]).concat(AUTOPOI
       return out.replace(/[^A-Z0-9]/g,'');
     }
     var existing={};
-    for(var i=0;i<data.length;i++)existing[normPlateLocal(data[i]&&data[i].plate)]=true;
+    for(var i=0;i<data.length;i++)existing[normPlateLocal(data[i]&&data[i].plate)]=i;
     var changed=false;
     for(var j=0;j<AUTOPOISK_OFFICIAL_UPDATE_20260829.length;j++){
       var car=AUTOPOISK_OFFICIAL_UPDATE_20260829[j];
       var p=normPlateLocal(car.plate);
-      if(!existing[p]){data.push(car);existing[p]=true;changed=true;}
+      if(Object.prototype.hasOwnProperty.call(existing,p)){
+        var idx=existing[p];
+        if(data[idx].model!==car.model || data[idx].org!==car.org || data[idx].validTo!==car.validTo){
+          data[idx]={model:car.model,plate:car.plate,org:car.org,validTo:car.validTo};
+          changed=true;
+        }
+      }else{
+        data.push(car);existing[p]=data.length-1;changed=true;
+      }
     }
     if(changed)localStorage.setItem(key,JSON.stringify(data));
   }catch(e){}
