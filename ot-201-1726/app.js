@@ -91,24 +91,3 @@ render();
   rec.onend=()=>{mic.classList.remove('on');mic.textContent='🎤'};
   mic.addEventListener('click',()=>{try{rec.start()}catch(_){}});
 })();
-
-async function load1884(){
-  const s=window.DATA1884_GZ||'';
-  if(!s)return;
-  try{
-    if(typeof DecompressionStream==='undefined')throw new Error('DecompressionStream is not supported');
-    const bytes=Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    const arr=JSON.parse(await new Response(stream).text());
-    for(const o of arr){
-      DATA.push(o);
-      const at=(o.a||[]).join(' ');
-      IDX.push({o,qw:words(o.q),aw:words(at),qn:norm(o.q),an:norm(at)});
-    }
-    render();
-  }catch(e){
-    console.error('Не удалось загрузить ОТ 1884.2',e);
-    hint.textContent='Не удалось загрузить раздел ОТ 1884.2. Обновите страницу в современном браузере.';
-  }
-}
-load1884();
