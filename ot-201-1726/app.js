@@ -39,11 +39,11 @@ function highlight(s,ts){
   }
   return out;
 }
-function label(m){return m==='201'?'ОТ 201.13':'ОТ 1726.13'}
+function label(m){return m==='201'?'ОТ 201.13':m==='1726'?'ОТ 1726.13':'ОТ 1884.2'}
 function render(){
   const phrase=norm(inp.value), ts=terms(inp.value), mv=mod.value;
   if(!phrase && !mv){
-    list.innerHTML='<div class="intro">Выберите раздел или введите/скажите часть вопроса.<br>Поиск работает сразу по обоим файлам.</div>';
+    list.innerHTML='<div class="intro">Выберите раздел или введите/скажите часть вопроса.<br>Поиск работает сразу по всем разделам.</div>';
     count.textContent='Всего: '+DATA.length+' вопросов';
     return;
   }
@@ -59,7 +59,8 @@ function render(){
   }
   list.innerHTML=rows.map(o=>{
     const ans=(o.a||[]).map(a=>'<div class="aline">'+highlight(a,ts)+'</div>').join('');
-    return '<article class="card"><div class="meta">'+label(o.m)+' · вопрос '+o.n+' · стр. '+o.p+'</div><div class="q">'+highlight(o.q,ts)+'</div><div class="answer"><small>ПРАВИЛЬНЫЙ ОТВЕТ</small>'+ans+'</div></article>';
+    const meta=o.t?label(o.m)+' · тема '+o.t+' · вопрос '+o.n:label(o.m)+' · вопрос '+o.n+' · стр. '+o.p;
+    return '<article class="card"><div class="meta">'+meta+'</div><div class="q">'+highlight(o.q,ts)+'</div><div class="answer"><small>ПРАВИЛЬНЫЙ ОТВЕТ</small>'+ans+'</div></article>';
   }).join('');
 }
 let timer;
