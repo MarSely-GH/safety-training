@@ -7,6 +7,8 @@
   function ensureYear(y,yr){
     const had = Array.isArray(yr.specials) && yr.specials.length===12;
     yr.specials = arr12(yr.specials);
+    yr.travelDaysOverride = Array.isArray(yr.travelDaysOverride)&&yr.travelDaysOverride.length===12 ? yr.travelDaysOverride : new Array(12).fill(null);
+    yr.vakhDaysOverride = Array.isArray(yr.vakhDaysOverride)&&yr.vakhDaysOverride.length===12 ? yr.vakhDaysOverride : new Array(12).fill(null);
     if(Number(y)===2026){
       if(!had){
         // Из фактической расчётки: август 2026, "Премия ДеньНефтеГаз%" = 40 986 ₽.
@@ -23,6 +25,13 @@
         if(Number(yr.travels[7])===2400) yr.travels[7]=2258.95;
         if(Number(yr.travels[8])===2400) yr.travels[8]=2156.275;
       }
+      // Фактические количества из расчёток:
+      // август 2026: путь 1 день, вахтовая 22 дня;
+      // сентябрь 2026: путь 2 дня, вахтовая 8 дней.
+      if(yr.travelDaysOverride[7]==null) yr.travelDaysOverride[7]=1;
+      if(yr.vakhDaysOverride[7]==null) yr.vakhDaysOverride[7]=22;
+      if(yr.travelDaysOverride[8]==null) yr.travelDaysOverride[8]=2;
+      if(yr.vakhDaysOverride[8]==null) yr.vakhDaysOverride[8]=8;
     }
     return yr;
   }
@@ -77,8 +86,10 @@
       var rkPay=r2(regBase*rk), snPay=r2(regBase*sn);
       var pp=r2((op+np)*prem);
       var rkPrem=r2(pp*rk), snPrem=r2(pp*sn);
-      var travelTotal=r2(mvD*(Number(yr.travels[m])||0));
-      vah=r2(vah);
+      var moveDaysCalc = yr.travelDaysOverride[m]==null ? mvD : Number(yr.travelDaysOverride[m]);
+      var onDaysCalc = yr.vakhDaysOverride[m]==null ? onD : Number(yr.vakhDaysOverride[m]);
+      var travelTotal=r2(moveDaysCalc*(Number(yr.travels[m])||0));
+      vah=r2(onDaysCalc*(Number(p.vahtaDay)||0));
       var workGross=r2(op+hp+np+lp+rkPay+snPay+pp+rkPrem+snPrem+vah+travelTotal);
       var rksnS=r2(rkPay+snPay+rkPrem+snPrem);
 
@@ -97,8 +108,8 @@
       var vacNet=r2(vacA*(1-p.ndfl1/100-p.prof/100));
       var av=r2(b15*mult*(1-p.ndfl1/100-p.prof/100)*p.avansK+v15);
       av=Math.min(Math.max(av,0),Math.max(r2(net-vacNet),0));
-      months.push({y:y,m:m,days:days,hours:hours,nightH:nightH,holH:holH,workDays:wd,onDays:onD,
-        moveDays:mvD,extra:ex,specialBase:specialBase,specialGross:specialGross,accrued:acc,vahta:vah,taxable:tax,ndfl:ndfl,prof:prof,net:net,
+      months.push({y:y,m:m,days:days,hours:hours,nightH:nightH,holH:holH,workDays:wd,onDays:onDaysCalc,
+        moveDays:moveDaysCalc,extra:ex,specialBase:specialBase,specialGross:specialGross,accrued:acc,vahta:vah,taxable:tax,ndfl:ndfl,prof:prof,net:net,
         avans:av,rest:r2(net-av-vacNet),tariff:tar,ytd:r2(ytdM+ytdR),rksnBase:rB,vacA:vacA,vacNet:vacNet});
     }
     months.vacRuns=runs;
